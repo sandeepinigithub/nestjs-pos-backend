@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  CASHIER
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+model User {
+  id                String      @id @default(cuid())
+  email             String      @unique
+  username          String?     @unique
+  password          String
+  firstName         String
+  lastName          String
+  phone             String?
+  role              UserRole    @default(USER)
+  status            UserStatus  @default(PENDING_VERIFICATION)
+  emailVerified     Boolean     @default(false)
+  emailVerifiedAt   DateTime?
+  lastLoginAt       DateTime?
+  passwordResetToken String?
+  passwordResetAt   DateTime?
+  profileImage      String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  createdBy         String?
+  updatedBy         String?
+
+  // Relations
+  createdUsers      User[]      @relation("UserCreatedBy")
+  updatedUsers      User[]      @relation("UserUpdatedBy")
+  createdByUser     User?       @relation("UserCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser     User?       @relation("UserUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("users")
+  @@index([email])
+  @@index([username])
+  @@index([role])
+  @@index([status])
+}
+
