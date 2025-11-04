@@ -1,46 +1,7 @@
 // ============================================
-// Prisma Schema
-// POS Backend - NestJS Application
-// Compatible with Prisma 5.x and 6.x
+// User Management Models
 // ============================================
 
-// ============================================
-// Generator & Datasource Configuration
-// ============================================
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-// ============================================
-// Enums
-// ============================================
-
-enum UserRole {
-  SUPER_ADMIN
-  ADMIN
-  MANAGER
-  CASHIER
-  USER
-}
-
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-  PENDING_VERIFICATION
-}
-
-// ============================================
-// Models
-// ============================================
-
-// User Management
 model User {
   id                String      @id @default(cuid())
   email             String      @unique
@@ -74,3 +35,4 @@ model User {
   @@index([role])
   @@index([status])
 }
+

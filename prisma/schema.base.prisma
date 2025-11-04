@@ -1,0 +1,15 @@
+// ============================================
+// Prisma Schema Base Configuration
+// ============================================
+// This file contains generator and datasource settings
+// Model files are in the models/ directory
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
