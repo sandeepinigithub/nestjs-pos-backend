@@ -98,7 +98,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Update last login
+    // Update last login (optimized - could be done in parallel with token generation)
     await this.prisma.user.update({
       where: { id: user.id },
       data: { lastLoginAt: new Date() },
@@ -114,6 +114,7 @@ export class AuthService {
   }
 
   async validateUser(userId: string): Promise<UserResponseDto | null> {
+    // TODO: Add caching here for frequently accessed users
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
@@ -131,6 +132,7 @@ export class AuthService {
         secret: this.configService.jwtRefreshSecret,
       });
 
+      // TODO: Add caching here
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
       });
