@@ -1,12 +1,8 @@
 // ============================================
-// Prisma Schema
-// POS Backend - NestJS Application
-// Compatible with Prisma 5.x and 6.x
+// Prisma Schema Base Configuration
 // ============================================
-
-// ============================================
-// Generator & Datasource Configuration
-// ============================================
+// This file contains generator and datasource settings
+// Model files are in the models/ directory
 
 generator client {
   provider = "prisma-client-js"
@@ -14,9 +10,16 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("postgresql://postgres:Admin@123@localhost:5432/pos-backend?schema=public")
 }
 
+
+// ============================================
+// Models (merged from models/ directory)
+// Auto-generated - DO NOT EDIT MANUALLY
+// ============================================
+
+// --- enums.prisma ---
 // ============================================
 // Enums
 // ============================================
@@ -36,11 +39,11 @@ enum UserStatus {
   PENDING_VERIFICATION
 }
 
+// --- user.model.prisma ---
 // ============================================
-// Models
+// User Management Models
 // ============================================
 
-// User Management
 model User {
   id                String      @id @default(cuid())
   email             String      @unique
@@ -74,3 +77,4 @@ model User {
   @@index([role])
   @@index([status])
 }
+
