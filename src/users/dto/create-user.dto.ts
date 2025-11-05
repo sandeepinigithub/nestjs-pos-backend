@@ -43,7 +43,7 @@ export class CreateUserDto {
   lastName: string;
 
   @IsOptional()
-  @IsPhoneNumber(null, { message: 'Please provide a valid phone number' })
+  @IsPhoneNumber(undefined, { message: 'Please provide a valid phone number' })
   phone?: string;
 
   @IsOptional()

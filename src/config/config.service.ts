@@ -6,7 +6,10 @@ export class AppConfigService {
   constructor(private configService: NestConfigService) {}
 
   get<T = any>(key: string, defaultValue?: T): T | undefined {
-    return this.configService.get<T>(key, defaultValue);
+    if (defaultValue !== undefined) {
+      return this.configService.get<T>(key, defaultValue as T);
+    }
+    return this.configService.get<T>(key) as T | undefined;
   }
 
   get port(): number {
@@ -18,7 +21,7 @@ export class AppConfigService {
   }
 
   get databaseUrl(): string {
-    return this.configService.get<string>('DATABASE_URL') || '';
+    return this.configService.get<string>('DATABASE_URL') || 'postgresql://postgres:12345@localhost:5432/pos-backend?schema=public';
   }
 
   get jwtSecret(): string {
