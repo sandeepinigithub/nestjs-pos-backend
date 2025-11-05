@@ -42,3 +42,7 @@ lerna-debug.log*
 # Prisma
 /prisma/migrations
 /prisma/schema.prisma
+
+# Accidental files
+nestjs-pos-backend@*
+ts-node
