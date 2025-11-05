@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("postgresql://postgres:Admin@123@localhost:5432/pos-backend?schema=public")
+  url      = env("postgresql://postgres:12345@localhost:5432/pos-backend?schema=public")
 }
 
 
