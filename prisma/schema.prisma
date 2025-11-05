@@ -21,7 +21,7 @@ datasource db {
 
 // --- enums.prisma ---
 // ============================================
-// Enums
+// Enums - Extended for Enterprise POS System
 // ============================================
 
 enum UserRole {
@@ -37,6 +37,1014 @@ enum UserStatus {
   INACTIVE
   SUSPENDED
   PENDING_VERIFICATION
+}
+
+enum StoreType {
+  COMPANY_OWNED
+  LICENSED
+  JOINT_VENTURE
+}
+
+enum StoreStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  CLOSED
+}
+
+enum SyncStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+enum SyncDirection {
+  PUSH_TO_REGIONAL
+  PULL_FROM_REGIONAL
+  PUSH_TO_GLOBAL
+  PULL_FROM_GLOBAL
+  BIDIRECTIONAL
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  PERMISSION_CHANGE
+  STATUS_CHANGE
+  SYNC
+}
+
+enum PermissionResource {
+  // User Management
+  USER_CREATE
+  USER_READ
+  USER_UPDATE
+  USER_DELETE
+  USER_STATUS_CHANGE
+  
+  // Store Management
+  STORE_CREATE
+  STORE_READ
+  STORE_UPDATE
+  STORE_DELETE
+  STORE_CONFIG
+  
+  // Product Management
+  PRODUCT_CREATE
+  PRODUCT_READ
+  PRODUCT_UPDATE
+  PRODUCT_DELETE
+  PRODUCT_PRICING
+  
+  // Order Management
+  ORDER_CREATE
+  ORDER_READ
+  ORDER_UPDATE
+  ORDER_CANCEL
+  ORDER_REFUND
+  
+  // Inventory Management
+  INVENTORY_READ
+  INVENTORY_UPDATE
+  INVENTORY_ADJUST
+  
+  // Reports
+  REPORT_SALES
+  REPORT_INVENTORY
+  REPORT_USER
+  REPORT_FINANCIAL
+  
+  // System
+  SYSTEM_CONFIG
+  SYSTEM_SYNC
+  SYSTEM_AUDIT
+}
+
+enum PermissionAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  EXECUTE
+  APPROVE
+  REJECT
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  UPI
+  APPLE_PAY
+  GOOGLE_PAY
+  LOYALTY_POINTS
+  STORED_VALUE
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum InventoryMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  TRANSFER
+  RETURN
+  WASTE
+}
+
+enum LoyaltyTransactionType {
+  EARN
+  REDEEM
+  EXPIRY
+  ADJUSTMENT
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  DISCONTINUED
+  OUT_OF_STOCK
+}
+
+enum TaxType {
+  GST
+  VAT
+  SALES_TAX
+  SERVICE_TAX
+  CUSTOM
+}
+
+// --- inventory.model.prisma ---
+// ============================================
+// Inventory Management Models
+// ============================================
+
+// Inventory (Stock at store level)
+model Inventory {
+  id          String   @id @default(cuid())
+  productId   String
+  storeId     String
+  
+  // Stock Levels
+  quantity    Int      @default(0)
+  reservedQuantity Int @default(0) // Reserved for pending orders
+  availableQuantity Int @default(0) // quantity - reservedQuantity
+  
+  // Reordering
+  reorderLevel Int?    // Minimum stock level
+  maxLevel     Int?    // Maximum stock level
+  
+  // Location within store
+  location    String?  // e.g., "Aisle 1", "Freezer 2"
+  
+  // Last update
+  lastUpdated DateTime @default(now())
+  updatedBy   String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  product     Product  @relation(fields: [productId], references: [id])
+  store       Store    @relation(fields: [storeId], references: [id])
+  movements   InventoryMovement[]
+  updatedByUser User?  @relation("InventoryUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@unique([productId, storeId])
+  @@map("inventory")
+  @@index([productId])
+  @@index([storeId])
+  @@index([availableQuantity])
+}
+
+// Inventory Movement (Stock transactions)
+model InventoryMovement {
+  id          String   @id @default(cuid())
+  inventoryId String
+  movementType InventoryMovementType
+  
+  // Movement Details
+  quantity    Int      // Positive for IN, negative for OUT
+  reference   String?  // Reference to order, transfer, etc.
+  referenceId String?  // ID of related entity (orderId, transferId, etc.)
+  
+  // Reason
+  reason      String?
+  notes       String?
+  
+  // Cost (for accounting)
+  unitCost    Decimal? @db.Decimal(10, 2)
+  totalCost   Decimal? @db.Decimal(10, 2)
+  
+  createdAt   DateTime @default(now())
+  createdBy   String?
+
+  // Relations
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  createdByUser User?   @relation("InventoryMovementCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("inventory_movements")
+  @@index([inventoryId])
+  @@index([movementType])
+  @@index([referenceId])
+  @@index([createdAt])
+}
+
+// --- loyalty.model.prisma ---
+// ============================================
+// Loyalty & Rewards Models
+// ============================================
+
+// Customer
+model Customer {
+  id          String   @id @default(cuid())
+  customerNumber String @unique // e.g., "CUST-2025-001234"
+  
+  // Personal Info
+  firstName   String
+  lastName    String
+  email       String?  @unique
+  phone       String?  @unique
+  
+  // Address
+  address     String?
+  city        String?
+  state       String?
+  postalCode  String?
+  country     String?
+  
+  // Loyalty
+  loyaltyPoints Int    @default(0)
+  tier         String? // e.g., "GOLD", "PLATINUM"
+  joinedAt     DateTime @default(now())
+  
+  // Preferences
+  preferences Json?    // e.g., favorite products, dietary restrictions
+  
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  orders      Order[]
+  loyaltyTransactions LoyaltyTransaction[]
+
+  @@map("customers")
+  @@index([customerNumber])
+  @@index([email])
+  @@index([phone])
+  @@index([isActive])
+}
+
+// Loyalty Program Configuration
+model LoyaltyProgram {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  
+  // Points Configuration
+  pointsPerDollar Decimal @db.Decimal(5, 2) // e.g., 1.5 points per dollar
+  pointsPerOrder  Int?    // Fixed points per order
+  
+  // Redemption Rules
+  redemptionRules Json?   // e.g., 100 points = $1 discount
+  
+  // Tiers
+  tiers       Json?    // Tier definitions and benefits
+  
+  // Validity
+  isActive    Boolean  @default(true)
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("loyalty_programs")
+  @@index([isActive])
+}
+
+// Loyalty Transaction
+model LoyaltyTransaction {
+  id          String   @id @default(cuid())
+  customerId  String
+  orderId     String?  // Related order (if applicable)
+  
+  // Transaction Details
+  transactionType LoyaltyTransactionType
+  points      Int     // Positive for earn, negative for redeem
+  balance     Int     // Balance after transaction
+  
+  // Reference
+  reference   String? // e.g., "Order #12345", "Promotion", "Adjustment"
+  notes       String?
+  
+  // Expiry (for earned points)
+  expiresAt   DateTime?
+  
+  createdAt   DateTime @default(now())
+  createdBy   String?
+
+  // Relations
+  customer    Customer @relation(fields: [customerId], references: [id])
+  order       Order?   @relation(fields: [orderId], references: [id])
+  createdByUser User?  @relation("LoyaltyTransactionCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("loyalty_transactions")
+  @@index([customerId])
+  @@index([orderId])
+  @@index([transactionType])
+  @@index([createdAt])
+}
+
+// --- order.model.prisma ---
+// ============================================
+// Order & Sales Models
+// ============================================
+
+// Order
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique // e.g., "ORD-2025-001234"
+  storeId         String
+  customerId      String?     // For registered customers
+  customerName    String?     // For guest orders
+  customerPhone   String?
+  customerEmail   String?
+  
+  // Order Details
+  status          OrderStatus @default(PENDING)
+  orderType       String?     // e.g., "DINE_IN", "TAKEAWAY", "DELIVERY"
+  
+  // Pricing
+  subtotal        Decimal     @db.Decimal(10, 2)
+  taxAmount       Decimal     @db.Decimal(10, 2)
+  discountAmount  Decimal    @default(0) @db.Decimal(10, 2)
+  totalAmount     Decimal     @db.Decimal(10, 2)
+  loyaltyPointsUsed Int?      @default(0)
+  loyaltyPointsEarned Int?    @default(0)
+  
+  // Payment
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   PaymentMethod?
+  
+  // Metadata
+  notes           String?
+  orderDate       DateTime    @default(now())
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  cancelledBy    String?
+  cancelledReason String?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  createdBy       String?
+  updatedBy       String?
+
+  // Relations
+  store           Store       @relation(fields: [storeId], references: [id])
+  customer        Customer?   @relation(fields: [customerId], references: [id])
+  orderItems      OrderItem[]
+  payments        Payment[]
+  loyaltyTransactions LoyaltyTransaction[]
+  createdByUser   User?       @relation("OrderCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser   User?       @relation("OrderUpdatedBy", fields: [updatedBy], references: [id])
+  cancelledByUser User?      @relation("OrderCancelledBy", fields: [cancelledBy], references: [id])
+
+  @@map("orders")
+  @@index([orderNumber])
+  @@index([storeId])
+  @@index([customerId])
+  @@index([status])
+  @@index([orderDate])
+  @@index([paymentStatus])
+}
+
+// Order Item
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String
+  taxId       String?
+  
+  // Item Details
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  taxRate     Decimal? @db.Decimal(5, 2)
+  taxAmount   Decimal  @default(0) @db.Decimal(10, 2)
+  discount    Decimal  @default(0) @db.Decimal(10, 2)
+  totalPrice  Decimal  @db.Decimal(10, 2)
+  
+  // Customizations
+  notes       String?
+  attributes  Json?    // e.g., size, add-ons, etc.
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id])
+  tax         Tax?     @relation(fields: [taxId], references: [id])
+
+  @@map("order_items")
+  @@index([orderId])
+  @@index([productId])
+}
+
+// Payment
+model Payment {
+  id              String         @id @default(cuid())
+  orderId         String
+  paymentMethod   PaymentMethod
+  amount          Decimal        @db.Decimal(10, 2)
+  status          PaymentStatus  @default(PENDING)
+  
+  // Transaction Details
+  transactionId   String?        @unique // External transaction ID
+  referenceNumber String?        // Payment reference
+  receiptUrl      String?        // Receipt/image URL
+  
+  // Metadata
+  processedAt      DateTime?
+  refundedAt      DateTime?
+  refundAmount    Decimal?       @db.Decimal(10, 2)
+  refundReason    String?
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  order           Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+  @@index([orderId])
+  @@index([transactionId])
+  @@index([status])
+  @@index([paymentMethod])
+}
+
+// --- permission.model.prisma ---
+// ============================================
+// Permission System Models
+// ============================================
+
+// Group with hierarchical support
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique // e.g., "MANAGERS", "CASHIERS"
+  description String?
+  parentId    String?
+  level       Int      @default(0) // Hierarchy level
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  // Self-referential hierarchy
+  parent      Group?   @relation("GroupHierarchy", fields: [parentId], references: [id])
+  children    Group[]  @relation("GroupHierarchy")
+
+  // Relations
+  groupPermissions GroupPermission[]
+  userGroups      UserGroup[]
+  createdByUser   User?      @relation("GroupCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser   User?      @relation("GroupUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("groups")
+  @@index([parentId])
+  @@index([code])
+  @@index([isActive])
+}
+
+// Base Permission definitions
+model Permission {
+  id          String   @id @default(cuid())
+  resource    PermissionResource
+  action      PermissionAction
+  name        String  // e.g., "Create User", "View Sales Report"
+  description String?
+  module      String? // e.g., "USER_MANAGEMENT", "REPORTS", "INVENTORY"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  groupPermissions GroupPermission[]
+  userPermissions UserPermission[]
+  accessPermissions AccessPermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+  @@index([resource])
+  @@index([module])
+  @@index([isActive])
+}
+
+// Access Permission - Store/Region specific permissions
+model AccessPermission {
+  id          String   @id @default(cuid())
+  permissionId String
+  storeId     String?  // null = global permission
+  regionId    String?  // null = global permission
+  isAllowed   Boolean  @default(true)
+  conditions  Json?    // Additional conditions (e.g., time restrictions, amount limits)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  // Relations
+  permission  Permission @relation(fields: [permissionId], references: [id])
+  store       Store?     @relation(fields: [storeId], references: [id])
+  region      Region?    @relation(fields: [regionId], references: [id])
+  createdByUser User?    @relation("AccessPermissionCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?    @relation("AccessPermissionUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("access_permissions")
+  @@index([permissionId])
+  @@index([storeId])
+  @@index([regionId])
+  @@index([isAllowed])
+}
+
+// Group-Permission mapping
+model GroupPermission {
+  id            String   @id @default(cuid())
+  groupId       String
+  permissionId  String
+  isAllowed     Boolean  @default(true)
+  conditions    Json?    // Additional conditions
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  grantedBy     String?
+
+  // Relations
+  group         Group      @relation(fields: [groupId], references: [id])
+  permission    Permission @relation(fields: [permissionId], references: [id])
+  grantedByUser User?      @relation("GroupPermissionGrantedBy", fields: [grantedBy], references: [id])
+
+  @@unique([groupId, permissionId])
+  @@map("group_permissions")
+  @@index([groupId])
+  @@index([permissionId])
+}
+
+// User-Permission mapping (direct permissions override group permissions)
+model UserPermission {
+  id            String   @id @default(cuid())
+  userId        String
+  permissionId  String
+  isAllowed     Boolean  @default(true)
+  conditions    Json?    // Additional conditions
+  storeId       String?  // Store-specific permission
+  expiresAt     DateTime? // Temporary permission
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  grantedBy     String?
+
+  // Relations
+  user          User        @relation(fields: [userId], references: [id])
+  permission    Permission  @relation(fields: [permissionId], references: [id])
+  store         Store?      @relation(fields: [storeId], references: [id])
+  grantedByUser User?       @relation("UserPermissionGrantedBy", fields: [grantedBy], references: [id])
+
+  @@unique([userId, permissionId, storeId])
+  @@map("user_permissions")
+  @@index([userId])
+  @@index([permissionId])
+  @@index([storeId])
+  @@index([expiresAt])
+}
+
+// User-Group mapping
+model UserGroup {
+  id        String   @id @default(cuid())
+  userId    String
+  groupId   String
+  storeId   String?  // Store-specific group assignment
+  isPrimary Boolean  @default(false) // Primary group for the user
+  assignedAt DateTime @default(now())
+  assignedBy String?
+
+  // Relations
+  user        User    @relation(fields: [userId], references: [id])
+  group       Group   @relation(fields: [groupId], references: [id])
+  store       Store?  @relation(fields: [storeId], references: [id])
+  assignedByUser User? @relation("UserGroupAssignedBy", fields: [assignedBy], references: [id])
+
+  @@unique([userId, groupId, storeId])
+  @@map("user_groups")
+  @@index([userId])
+  @@index([groupId])
+  @@index([storeId])
+}
+
+// --- product.model.prisma ---
+// ============================================
+// Product & Menu Models
+// ============================================
+
+// Product Category
+model Category {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  parentId    String?  // For category hierarchy
+  image       String?
+  displayOrder Int     @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  products    Product[]
+
+  @@map("categories")
+  @@index([parentId])
+  @@index([code])
+}
+
+// Product (Menu Item)
+model Product {
+  id              String   @id @default(cuid())
+  code            String   @unique // SKU/Product code
+  name            String
+  description     String?
+  categoryId      String
+  image           String?
+  status          ProductStatus @default(ACTIVE)
+  isAvailable     Boolean  @default(true)
+  
+  // Pricing (base price, can be overridden per store)
+  basePrice       Decimal  @db.Decimal(10, 2)
+  costPrice       Decimal? @db.Decimal(10, 2)
+  
+  // Attributes
+  attributes      Json?    // e.g., size, flavor, etc.
+  tags            String[] // For search/filtering
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  updatedBy       String?
+
+  // Relations
+  category        Category @relation(fields: [categoryId], references: [id])
+  productStores   ProductStore[]
+  orderItems      OrderItem[]
+  inventory       Inventory[]
+  createdByUser   User?    @relation("ProductCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser   User?    @relation("ProductUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("products")
+  @@index([code])
+  @@index([categoryId])
+  @@index([status])
+  @@index([isAvailable])
+}
+
+// Product-Store mapping with store-specific pricing
+model ProductStore {
+  id          String   @id @default(cuid())
+  productId   String
+  storeId     String
+  price       Decimal  @db.Decimal(10, 2) // Store-specific price
+  isAvailable Boolean  @default(true)
+  stockLevel  Int?     // Current stock at store
+  reorderLevel Int?    // Reorder threshold
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  product     Product  @relation(fields: [productId], references: [id])
+  store       Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([productId, storeId])
+  @@map("product_stores")
+  @@index([productId])
+  @@index([storeId])
+  @@index([isAvailable])
+}
+
+// Tax Configuration
+model Tax {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  type        TaxType
+  rate        Decimal  @db.Decimal(5, 2) // Percentage (e.g., 18.00 for 18%)
+  countryId   String?  // Country-specific tax
+  regionId    String?  // Region-specific tax
+  storeId     String?  // Store-specific tax
+  isActive    Boolean  @default(true)
+  effectiveFrom DateTime @default(now())
+  effectiveTo   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  country     Country? @relation(fields: [countryId], references: [id])
+  region      Region?  @relation(fields: [regionId], references: [id])
+  store       Store?   @relation(fields: [storeId], references: [id])
+  orderItems  OrderItem[]
+
+  @@map("taxes")
+  @@index([code])
+  @@index([type])
+  @@index([countryId])
+  @@index([regionId])
+  @@index([storeId])
+  @@index([isActive])
+}
+
+// --- store.model.prisma ---
+// ============================================
+// Store & Organization Models
+// ============================================
+
+// Country model
+model Country {
+  id          String   @id @default(cuid())
+  code        String   @unique // ISO country code (e.g., "US", "IN")
+  name        String
+  currency    String   // ISO currency code (e.g., "USD", "INR")
+  timezone    String   // e.g., "America/New_York"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  regions     Region[]
+  stores      Store[]
+  taxes       Tax[]
+
+  @@map("countries")
+  @@index([code])
+}
+
+// Region model (for regional data centers)
+model Region {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g., "US_EAST", "APAC_INDIA"
+  name        String
+  countryId   String
+  description String?
+  dataCenterUrl String? // Regional data center API URL
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  country     Country  @relation(fields: [countryId], references: [id])
+  stores      Store[]
+  syncLogs    SyncLog[]
+  accessPermissions AccessPermission[]
+  taxes       Tax[]
+
+  @@map("regions")
+  @@index([countryId])
+  @@index([code])
+}
+
+// Store model
+model Store {
+  id              String      @id @default(cuid())
+  code            String      @unique // Store code (e.g., "ST001", "NYC_001")
+  name            String
+  storeType       StoreType
+  status          StoreStatus @default(ACTIVE)
+  countryId       String
+  regionId        String
+  parentStoreId   String?     // For multi-level store hierarchy
+  
+  // Address
+  address         String
+  city            String
+  state           String?
+  postalCode      String?
+  latitude        Float?
+  longitude       Float?
+  
+  // Contact
+  phone           String?
+  email           String?
+  
+  // Configuration
+  timezone        String
+  currency        String
+  taxConfig       Json?       // Tax configuration per region
+  paymentConfig   Json?       // Payment methods enabled
+  
+  // Store Server Info
+  localServerUrl  String?     // Local store server URL
+  lastSyncAt      DateTime?
+  syncStatus      SyncStatus  @default(PENDING)
+  
+  // Ownership
+  ownershipType   StoreType
+  licenseNumber   String?     // For licensed stores
+  licenseExpiry   DateTime?
+  
+  // Metadata
+  isActive        Boolean     @default(true)
+  openedAt        DateTime?
+  closedAt        DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  createdBy       String?
+  updatedBy       String?
+
+  // Relations
+  country         Country     @relation(fields: [countryId], references: [id])
+  region          Region      @relation(fields: [regionId], references: [id])
+  parentStore     Store?      @relation("StoreHierarchy", fields: [parentStoreId], references: [id])
+  childStores     Store[]     @relation("StoreHierarchy")
+  
+  storeOwnerships StoreOwnership[]
+  userStores      UserStore[]
+  products        ProductStore[]
+  orders          Order[]
+  inventory       Inventory[]
+  syncLogs        SyncLog[]
+  accessPermissions AccessPermission[]
+  userPermissions UserPermission[]
+  userGroups      UserGroup[]
+  auditLogs       AuditLog[]
+  taxes           Tax[]
+  defaultUsers    User[]      @relation("UserDefaultStore")
+
+  createdByUser   User?       @relation("StoreCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser   User?       @relation("StoreUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("stores")
+  @@index([code])
+  @@index([storeType])
+  @@index([status])
+  @@index([countryId])
+  @@index([regionId])
+  @@index([parentStoreId])
+  @@index([isActive])
+}
+
+// Store Ownership Model (for Licensed Stores & Joint Ventures)
+model StoreOwnership {
+  id              String   @id @default(cuid())
+  storeId         String
+  ownershipType   StoreType
+  ownerName       String   // e.g., "Tata Consumer Products Limited"
+  licenseNumber   String?  // License/franchise number
+  licenseStartDate DateTime?
+  licenseEndDate   DateTime?
+  contractDetails Json?    // Contract details, terms, etc.
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  updatedBy       String?
+
+  // Relations
+  store           Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdByUser   User?    @relation("StoreOwnershipCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser   User?    @relation("StoreOwnershipUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("store_ownerships")
+  @@index([storeId])
+  @@index([ownershipType])
+  @@index([isActive])
+}
+
+// User-Store Assignment (many-to-many)
+model UserStore {
+  id          String   @id @default(cuid())
+  userId      String
+  storeId     String
+  isPrimary   Boolean  @default(false) // Primary store for the user
+  assignedAt  DateTime @default(now())
+  assignedBy  String?
+  expiresAt   DateTime? // For temporary assignments
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+  store       Store    @relation(fields: [storeId], references: [id])
+  assignedByUser User? @relation("UserStoreAssignedBy", fields: [assignedBy], references: [id])
+
+  @@unique([userId, storeId])
+  @@map("user_stores")
+  @@index([userId])
+  @@index([storeId])
+  @@index([isPrimary])
+}
+
+// --- sync.model.prisma ---
+// ============================================
+// Sync & Audit Models
+// ============================================
+
+// Sync Log (for store-regional-global sync)
+model SyncLog {
+  id          String   @id @default(cuid())
+  storeId     String?
+  regionId    String?
+  
+  // Sync Details
+  syncType    String   // e.g., "FULL", "INCREMENTAL", "PRODUCTS", "ORDERS"
+  direction   SyncDirection
+  status      SyncStatus @default(PENDING)
+  
+  // Data
+  recordsCount Int?
+  recordsSynced Int    @default(0)
+  recordsFailed Int   @default(0)
+  
+  // Timing
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  duration    Int?     // Duration in milliseconds
+  
+  // Error Handling
+  errorMessage String?
+  errorDetails Json?
+  
+  // Metadata
+  metadata    Json?    // Additional sync metadata
+  createdAt   DateTime @default(now())
+
+  // Relations
+  store       Store?   @relation(fields: [storeId], references: [id])
+  region      Region?  @relation(fields: [regionId], references: [id])
+
+  @@map("sync_logs")
+  @@index([storeId])
+  @@index([regionId])
+  @@index([syncType])
+  @@index([status])
+  @@index([startedAt])
+}
+
+// Audit Log (for tracking all system changes)
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  storeId     String?
+  
+  // Action Details
+  action      AuditAction
+  resource    String   // e.g., "User", "Order", "Product"
+  resourceId  String?  // ID of the affected resource
+  
+  // Changes
+  oldValues   Json?    // Previous values
+  newValues   Json?    // New values
+  changes     Json?    // Diff of changes
+  
+  // Request Info
+  ipAddress   String?
+  userAgent   String?
+  requestId   String?
+  
+  // Metadata
+  metadata    Json?    // Additional audit metadata
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User?    @relation(fields: [userId], references: [id])
+  store       Store?   @relation(fields: [storeId], references: [id])
+
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([storeId])
+  @@index([action])
+  @@index([resource])
+  @@index([resourceId])
+  @@index([createdAt])
 }
 
 // --- user.model.prisma ---
@@ -60,21 +1068,75 @@ model User {
   passwordResetToken String?
   passwordResetAt   DateTime?
   profileImage      String?
+  
+  // Multi-store support
+  defaultStoreId    String?     // Default store for the user
+  
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   createdBy         String?
   updatedBy         String?
 
-  // Relations
+  // Relations - User Hierarchy
   createdUsers      User[]      @relation("UserCreatedBy")
   updatedUsers      User[]      @relation("UserUpdatedBy")
   createdByUser     User?       @relation("UserCreatedBy", fields: [createdBy], references: [id])
   updatedByUser     User?       @relation("UserUpdatedBy", fields: [updatedBy], references: [id])
+  
+  // Relations - Multi-store
+  defaultStore      Store?      @relation("UserDefaultStore", fields: [defaultStoreId], references: [id])
+  userStores        UserStore[]
+  
+  // Relations - Permissions
+  userGroups        UserGroup[]
+  userPermissions   UserPermission[]
+  
+  // Relations - Group Management
+  groupsCreated     Group[]      @relation("GroupCreatedBy")
+  groupsUpdated     Group[]      @relation("GroupUpdatedBy")
+  
+  // Relations - Permission Management
+  groupPermissionsGranted GroupPermission[] @relation("GroupPermissionGrantedBy")
+  userPermissionsGranted  UserPermission[]  @relation("UserPermissionGrantedBy")
+  userGroupsAssigned      UserGroup[]       @relation("UserGroupAssignedBy")
+  userStoresAssigned      UserStore[]       @relation("UserStoreAssignedBy")
+  
+  // Relations - Access Permissions
+  accessPermissionsCreated AccessPermission[] @relation("AccessPermissionCreatedBy")
+  accessPermissionsUpdated AccessPermission[] @relation("AccessPermissionUpdatedBy")
+  
+  // Relations - Store Management
+  storesCreated     Store[]      @relation("StoreCreatedBy")
+  storesUpdated     Store[]      @relation("StoreUpdatedBy")
+  
+  // Relations - Store Ownership
+  storeOwnershipsCreated StoreOwnership[] @relation("StoreOwnershipCreatedBy")
+  storeOwnershipsUpdated StoreOwnership[] @relation("StoreOwnershipUpdatedBy")
+  
+  // Relations - Orders
+  ordersCreated     Order[]      @relation("OrderCreatedBy")
+  ordersUpdated     Order[]      @relation("OrderUpdatedBy")
+  ordersCancelled   Order[]      @relation("OrderCancelledBy")
+  
+  // Relations - Products
+  productsCreated   Product[]    @relation("ProductCreatedBy")
+  productsUpdated   Product[]    @relation("ProductUpdatedBy")
+  
+  // Relations - Inventory
+  inventoryUpdated  Inventory[]  @relation("InventoryUpdatedBy")
+  inventoryMovements InventoryMovement[] @relation("InventoryMovementCreatedBy")
+  
+  // Relations - Loyalty
+  loyaltyTransactionsCreated LoyaltyTransaction[] @relation("LoyaltyTransactionCreatedBy")
+  
+  // Relations - Audit
+  auditLogs         AuditLog[]
 
   @@map("users")
   @@index([email])
   @@index([username])
   @@index([role])
   @@index([status])
+  @@index([defaultStoreId])
 }
 

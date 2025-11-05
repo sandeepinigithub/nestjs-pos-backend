@@ -18,21 +18,75 @@ model User {
   passwordResetToken String?
   passwordResetAt   DateTime?
   profileImage      String?
+  
+  // Multi-store support
+  defaultStoreId    String?     // Default store for the user
+  
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
   createdBy         String?
   updatedBy         String?
 
-  // Relations
+  // Relations - User Hierarchy
   createdUsers      User[]      @relation("UserCreatedBy")
   updatedUsers      User[]      @relation("UserUpdatedBy")
   createdByUser     User?       @relation("UserCreatedBy", fields: [createdBy], references: [id])
   updatedByUser     User?       @relation("UserUpdatedBy", fields: [updatedBy], references: [id])
+  
+  // Relations - Multi-store
+  defaultStore      Store?      @relation("UserDefaultStore", fields: [defaultStoreId], references: [id])
+  userStores        UserStore[]
+  
+  // Relations - Permissions
+  userGroups        UserGroup[]
+  userPermissions   UserPermission[]
+  
+  // Relations - Group Management
+  groupsCreated     Group[]      @relation("GroupCreatedBy")
+  groupsUpdated     Group[]      @relation("GroupUpdatedBy")
+  
+  // Relations - Permission Management
+  groupPermissionsGranted GroupPermission[] @relation("GroupPermissionGrantedBy")
+  userPermissionsGranted  UserPermission[]  @relation("UserPermissionGrantedBy")
+  userGroupsAssigned      UserGroup[]       @relation("UserGroupAssignedBy")
+  userStoresAssigned      UserStore[]       @relation("UserStoreAssignedBy")
+  
+  // Relations - Access Permissions
+  accessPermissionsCreated AccessPermission[] @relation("AccessPermissionCreatedBy")
+  accessPermissionsUpdated AccessPermission[] @relation("AccessPermissionUpdatedBy")
+  
+  // Relations - Store Management
+  storesCreated     Store[]      @relation("StoreCreatedBy")
+  storesUpdated     Store[]      @relation("StoreUpdatedBy")
+  
+  // Relations - Store Ownership
+  storeOwnershipsCreated StoreOwnership[] @relation("StoreOwnershipCreatedBy")
+  storeOwnershipsUpdated StoreOwnership[] @relation("StoreOwnershipUpdatedBy")
+  
+  // Relations - Orders
+  ordersCreated     Order[]      @relation("OrderCreatedBy")
+  ordersUpdated     Order[]      @relation("OrderUpdatedBy")
+  ordersCancelled   Order[]      @relation("OrderCancelledBy")
+  
+  // Relations - Products
+  productsCreated   Product[]    @relation("ProductCreatedBy")
+  productsUpdated   Product[]    @relation("ProductUpdatedBy")
+  
+  // Relations - Inventory
+  inventoryUpdated  Inventory[]  @relation("InventoryUpdatedBy")
+  inventoryMovements InventoryMovement[] @relation("InventoryMovementCreatedBy")
+  
+  // Relations - Loyalty
+  loyaltyTransactionsCreated LoyaltyTransaction[] @relation("LoyaltyTransactionCreatedBy")
+  
+  // Relations - Audit
+  auditLogs         AuditLog[]
 
   @@map("users")
   @@index([email])
   @@index([username])
   @@index([role])
   @@index([status])
+  @@index([defaultStoreId])
 }
 

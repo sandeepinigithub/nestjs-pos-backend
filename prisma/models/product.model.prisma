@@ -1,0 +1,121 @@
+// ============================================
+// Product & Menu Models
+// ============================================
+
+// Product Category
+model Category {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  parentId    String?  // For category hierarchy
+  image       String?
+  displayOrder Int     @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  parent      Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  products    Product[]
+
+  @@map("categories")
+  @@index([parentId])
+  @@index([code])
+}
+
+// Product (Menu Item)
+model Product {
+  id              String   @id @default(cuid())
+  code            String   @unique // SKU/Product code
+  name            String
+  description     String?
+  categoryId      String
+  image           String?
+  status          ProductStatus @default(ACTIVE)
+  isAvailable     Boolean  @default(true)
+  
+  // Pricing (base price, can be overridden per store)
+  basePrice       Decimal  @db.Decimal(10, 2)
+  costPrice       Decimal? @db.Decimal(10, 2)
+  
+  // Attributes
+  attributes      Json?    // e.g., size, flavor, etc.
+  tags            String[] // For search/filtering
+  
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  updatedBy       String?
+
+  // Relations
+  category        Category @relation(fields: [categoryId], references: [id])
+  productStores   ProductStore[]
+  orderItems      OrderItem[]
+  inventory       Inventory[]
+  createdByUser   User?    @relation("ProductCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser   User?    @relation("ProductUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("products")
+  @@index([code])
+  @@index([categoryId])
+  @@index([status])
+  @@index([isAvailable])
+}
+
+// Product-Store mapping with store-specific pricing
+model ProductStore {
+  id          String   @id @default(cuid())
+  productId   String
+  storeId     String
+  price       Decimal  @db.Decimal(10, 2) // Store-specific price
+  isAvailable Boolean  @default(true)
+  stockLevel  Int?     // Current stock at store
+  reorderLevel Int?    // Reorder threshold
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  product     Product  @relation(fields: [productId], references: [id])
+  store       Store    @relation(fields: [storeId], references: [id])
+
+  @@unique([productId, storeId])
+  @@map("product_stores")
+  @@index([productId])
+  @@index([storeId])
+  @@index([isAvailable])
+}
+
+// Tax Configuration
+model Tax {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  type        TaxType
+  rate        Decimal  @db.Decimal(5, 2) // Percentage (e.g., 18.00 for 18%)
+  countryId   String?  // Country-specific tax
+  regionId    String?  // Region-specific tax
+  storeId     String?  // Store-specific tax
+  isActive    Boolean  @default(true)
+  effectiveFrom DateTime @default(now())
+  effectiveTo   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  country     Country? @relation(fields: [countryId], references: [id])
+  region      Region?  @relation(fields: [regionId], references: [id])
+  store       Store?   @relation(fields: [storeId], references: [id])
+  orderItems  OrderItem[]
+
+  @@map("taxes")
+  @@index([code])
+  @@index([type])
+  @@index([countryId])
+  @@index([regionId])
+  @@index([storeId])
+  @@index([isActive])
+}
+

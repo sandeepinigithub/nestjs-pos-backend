@@ -1,0 +1,157 @@
+// ============================================
+// Permission System Models
+// ============================================
+
+// Group with hierarchical support
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique // e.g., "MANAGERS", "CASHIERS"
+  description String?
+  parentId    String?
+  level       Int      @default(0) // Hierarchy level
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  // Self-referential hierarchy
+  parent      Group?   @relation("GroupHierarchy", fields: [parentId], references: [id])
+  children    Group[]  @relation("GroupHierarchy")
+
+  // Relations
+  groupPermissions GroupPermission[]
+  userGroups      UserGroup[]
+  createdByUser   User?      @relation("GroupCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser   User?      @relation("GroupUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("groups")
+  @@index([parentId])
+  @@index([code])
+  @@index([isActive])
+}
+
+// Base Permission definitions
+model Permission {
+  id          String   @id @default(cuid())
+  resource    PermissionResource
+  action      PermissionAction
+  name        String  // e.g., "Create User", "View Sales Report"
+  description String?
+  module      String? // e.g., "USER_MANAGEMENT", "REPORTS", "INVENTORY"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  groupPermissions GroupPermission[]
+  userPermissions UserPermission[]
+  accessPermissions AccessPermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+  @@index([resource])
+  @@index([module])
+  @@index([isActive])
+}
+
+// Access Permission - Store/Region specific permissions
+model AccessPermission {
+  id          String   @id @default(cuid())
+  permissionId String
+  storeId     String?  // null = global permission
+  regionId    String?  // null = global permission
+  isAllowed   Boolean  @default(true)
+  conditions  Json?    // Additional conditions (e.g., time restrictions, amount limits)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String?
+  updatedBy   String?
+
+  // Relations
+  permission  Permission @relation(fields: [permissionId], references: [id])
+  store       Store?     @relation(fields: [storeId], references: [id])
+  region      Region?    @relation(fields: [regionId], references: [id])
+  createdByUser User?    @relation("AccessPermissionCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser User?    @relation("AccessPermissionUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("access_permissions")
+  @@index([permissionId])
+  @@index([storeId])
+  @@index([regionId])
+  @@index([isAllowed])
+}
+
+// Group-Permission mapping
+model GroupPermission {
+  id            String   @id @default(cuid())
+  groupId       String
+  permissionId  String
+  isAllowed     Boolean  @default(true)
+  conditions    Json?    // Additional conditions
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  grantedBy     String?
+
+  // Relations
+  group         Group      @relation(fields: [groupId], references: [id])
+  permission    Permission @relation(fields: [permissionId], references: [id])
+  grantedByUser User?      @relation("GroupPermissionGrantedBy", fields: [grantedBy], references: [id])
+
+  @@unique([groupId, permissionId])
+  @@map("group_permissions")
+  @@index([groupId])
+  @@index([permissionId])
+}
+
+// User-Permission mapping (direct permissions override group permissions)
+model UserPermission {
+  id            String   @id @default(cuid())
+  userId        String
+  permissionId  String
+  isAllowed     Boolean  @default(true)
+  conditions    Json?    // Additional conditions
+  storeId       String?  // Store-specific permission
+  expiresAt     DateTime? // Temporary permission
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  grantedBy     String?
+
+  // Relations
+  user          User        @relation(fields: [userId], references: [id])
+  permission    Permission  @relation(fields: [permissionId], references: [id])
+  store         Store?      @relation(fields: [storeId], references: [id])
+  grantedByUser User?       @relation("UserPermissionGrantedBy", fields: [grantedBy], references: [id])
+
+  @@unique([userId, permissionId, storeId])
+  @@map("user_permissions")
+  @@index([userId])
+  @@index([permissionId])
+  @@index([storeId])
+  @@index([expiresAt])
+}
+
+// User-Group mapping
+model UserGroup {
+  id        String   @id @default(cuid())
+  userId    String
+  groupId   String
+  storeId   String?  // Store-specific group assignment
+  isPrimary Boolean  @default(false) // Primary group for the user
+  assignedAt DateTime @default(now())
+  assignedBy String?
+
+  // Relations
+  user        User    @relation(fields: [userId], references: [id])
+  group       Group   @relation(fields: [groupId], references: [id])
+  store       Store?  @relation(fields: [storeId], references: [id])
+  assignedByUser User? @relation("UserGroupAssignedBy", fields: [assignedBy], references: [id])
+
+  @@unique([userId, groupId, storeId])
+  @@map("user_groups")
+  @@index([userId])
+  @@index([groupId])
+  @@index([storeId])
+}
+

@@ -1,5 +1,5 @@
 // ============================================
-// Enums
+// Enums - Extended for Enterprise POS System
 // ============================================
 
 enum UserRole {
@@ -17,3 +17,158 @@ enum UserStatus {
   PENDING_VERIFICATION
 }
 
+enum StoreType {
+  COMPANY_OWNED
+  LICENSED
+  JOINT_VENTURE
+}
+
+enum StoreStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  CLOSED
+}
+
+enum SyncStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  PARTIAL
+}
+
+enum SyncDirection {
+  PUSH_TO_REGIONAL
+  PULL_FROM_REGIONAL
+  PUSH_TO_GLOBAL
+  PULL_FROM_GLOBAL
+  BIDIRECTIONAL
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  PERMISSION_CHANGE
+  STATUS_CHANGE
+  SYNC
+}
+
+enum PermissionResource {
+  // User Management
+  USER_CREATE
+  USER_READ
+  USER_UPDATE
+  USER_DELETE
+  USER_STATUS_CHANGE
+  
+  // Store Management
+  STORE_CREATE
+  STORE_READ
+  STORE_UPDATE
+  STORE_DELETE
+  STORE_CONFIG
+  
+  // Product Management
+  PRODUCT_CREATE
+  PRODUCT_READ
+  PRODUCT_UPDATE
+  PRODUCT_DELETE
+  PRODUCT_PRICING
+  
+  // Order Management
+  ORDER_CREATE
+  ORDER_READ
+  ORDER_UPDATE
+  ORDER_CANCEL
+  ORDER_REFUND
+  
+  // Inventory Management
+  INVENTORY_READ
+  INVENTORY_UPDATE
+  INVENTORY_ADJUST
+  
+  // Reports
+  REPORT_SALES
+  REPORT_INVENTORY
+  REPORT_USER
+  REPORT_FINANCIAL
+  
+  // System
+  SYSTEM_CONFIG
+  SYSTEM_SYNC
+  SYSTEM_AUDIT
+}
+
+enum PermissionAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  EXECUTE
+  APPROVE
+  REJECT
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  UPI
+  APPLE_PAY
+  GOOGLE_PAY
+  LOYALTY_POINTS
+  STORED_VALUE
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum InventoryMovementType {
+  IN
+  OUT
+  ADJUSTMENT
+  TRANSFER
+  RETURN
+  WASTE
+}
+
+enum LoyaltyTransactionType {
+  EARN
+  REDEEM
+  EXPIRY
+  ADJUSTMENT
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+  DISCONTINUED
+  OUT_OF_STOCK
+}
+
+enum TaxType {
+  GST
+  VAT
+  SALES_TAX
+  SERVICE_TAX
+  CUSTOM
+}

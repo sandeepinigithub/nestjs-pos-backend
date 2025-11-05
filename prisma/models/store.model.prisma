@@ -1,0 +1,177 @@
+// ============================================
+// Store & Organization Models
+// ============================================
+
+// Country model
+model Country {
+  id          String   @id @default(cuid())
+  code        String   @unique // ISO country code (e.g., "US", "IN")
+  name        String
+  currency    String   // ISO currency code (e.g., "USD", "INR")
+  timezone    String   // e.g., "America/New_York"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  regions     Region[]
+  stores      Store[]
+  taxes       Tax[]
+
+  @@map("countries")
+  @@index([code])
+}
+
+// Region model (for regional data centers)
+model Region {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g., "US_EAST", "APAC_INDIA"
+  name        String
+  countryId   String
+  description String?
+  dataCenterUrl String? // Regional data center API URL
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  country     Country  @relation(fields: [countryId], references: [id])
+  stores      Store[]
+  syncLogs    SyncLog[]
+  accessPermissions AccessPermission[]
+  taxes       Tax[]
+
+  @@map("regions")
+  @@index([countryId])
+  @@index([code])
+}
+
+// Store model
+model Store {
+  id              String      @id @default(cuid())
+  code            String      @unique // Store code (e.g., "ST001", "NYC_001")
+  name            String
+  storeType       StoreType
+  status          StoreStatus @default(ACTIVE)
+  countryId       String
+  regionId        String
+  parentStoreId   String?     // For multi-level store hierarchy
+  
+  // Address
+  address         String
+  city            String
+  state           String?
+  postalCode      String?
+  latitude        Float?
+  longitude       Float?
+  
+  // Contact
+  phone           String?
+  email           String?
+  
+  // Configuration
+  timezone        String
+  currency        String
+  taxConfig       Json?       // Tax configuration per region
+  paymentConfig   Json?       // Payment methods enabled
+  
+  // Store Server Info
+  localServerUrl  String?     // Local store server URL
+  lastSyncAt      DateTime?
+  syncStatus      SyncStatus  @default(PENDING)
+  
+  // Ownership
+  ownershipType   StoreType
+  licenseNumber   String?     // For licensed stores
+  licenseExpiry   DateTime?
+  
+  // Metadata
+  isActive        Boolean     @default(true)
+  openedAt        DateTime?
+  closedAt        DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  createdBy       String?
+  updatedBy       String?
+
+  // Relations
+  country         Country     @relation(fields: [countryId], references: [id])
+  region          Region      @relation(fields: [regionId], references: [id])
+  parentStore     Store?      @relation("StoreHierarchy", fields: [parentStoreId], references: [id])
+  childStores     Store[]     @relation("StoreHierarchy")
+  
+  storeOwnerships StoreOwnership[]
+  userStores      UserStore[]
+  products        ProductStore[]
+  orders          Order[]
+  inventory       Inventory[]
+  syncLogs        SyncLog[]
+  accessPermissions AccessPermission[]
+  userPermissions UserPermission[]
+  userGroups      UserGroup[]
+  auditLogs       AuditLog[]
+  taxes           Tax[]
+  defaultUsers    User[]      @relation("UserDefaultStore")
+
+  createdByUser   User?       @relation("StoreCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser   User?       @relation("StoreUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("stores")
+  @@index([code])
+  @@index([storeType])
+  @@index([status])
+  @@index([countryId])
+  @@index([regionId])
+  @@index([parentStoreId])
+  @@index([isActive])
+}
+
+// Store Ownership Model (for Licensed Stores & Joint Ventures)
+model StoreOwnership {
+  id              String   @id @default(cuid())
+  storeId         String
+  ownershipType   StoreType
+  ownerName       String   // e.g., "Tata Consumer Products Limited"
+  licenseNumber   String?  // License/franchise number
+  licenseStartDate DateTime?
+  licenseEndDate   DateTime?
+  contractDetails Json?    // Contract details, terms, etc.
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  createdBy       String?
+  updatedBy       String?
+
+  // Relations
+  store           Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdByUser   User?    @relation("StoreOwnershipCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser   User?    @relation("StoreOwnershipUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("store_ownerships")
+  @@index([storeId])
+  @@index([ownershipType])
+  @@index([isActive])
+}
+
+// User-Store Assignment (many-to-many)
+model UserStore {
+  id          String   @id @default(cuid())
+  userId      String
+  storeId     String
+  isPrimary   Boolean  @default(false) // Primary store for the user
+  assignedAt  DateTime @default(now())
+  assignedBy  String?
+  expiresAt   DateTime? // For temporary assignments
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+  store       Store    @relation(fields: [storeId], references: [id])
+  assignedByUser User? @relation("UserStoreAssignedBy", fields: [assignedBy], references: [id])
+
+  @@unique([userId, storeId])
+  @@map("user_stores")
+  @@index([userId])
+  @@index([storeId])
+  @@index([isPrimary])
+}
+

@@ -1,0 +1,83 @@
+// ============================================
+// Sync & Audit Models
+// ============================================
+
+// Sync Log (for store-regional-global sync)
+model SyncLog {
+  id          String   @id @default(cuid())
+  storeId     String?
+  regionId    String?
+  
+  // Sync Details
+  syncType    String   // e.g., "FULL", "INCREMENTAL", "PRODUCTS", "ORDERS"
+  direction   SyncDirection
+  status      SyncStatus @default(PENDING)
+  
+  // Data
+  recordsCount Int?
+  recordsSynced Int    @default(0)
+  recordsFailed Int   @default(0)
+  
+  // Timing
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  duration    Int?     // Duration in milliseconds
+  
+  // Error Handling
+  errorMessage String?
+  errorDetails Json?
+  
+  // Metadata
+  metadata    Json?    // Additional sync metadata
+  createdAt   DateTime @default(now())
+
+  // Relations
+  store       Store?   @relation(fields: [storeId], references: [id])
+  region      Region?  @relation(fields: [regionId], references: [id])
+
+  @@map("sync_logs")
+  @@index([storeId])
+  @@index([regionId])
+  @@index([syncType])
+  @@index([status])
+  @@index([startedAt])
+}
+
+// Audit Log (for tracking all system changes)
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  storeId     String?
+  
+  // Action Details
+  action      AuditAction
+  resource    String   // e.g., "User", "Order", "Product"
+  resourceId  String?  // ID of the affected resource
+  
+  // Changes
+  oldValues   Json?    // Previous values
+  newValues   Json?    // New values
+  changes     Json?    // Diff of changes
+  
+  // Request Info
+  ipAddress   String?
+  userAgent   String?
+  requestId   String?
+  
+  // Metadata
+  metadata    Json?    // Additional audit metadata
+  createdAt   DateTime @default(now())
+
+  // Relations
+  user        User?    @relation(fields: [userId], references: [id])
+  store       Store?   @relation(fields: [storeId], references: [id])
+
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([storeId])
+  @@index([action])
+  @@index([resource])
+  @@index([resourceId])
+  @@index([createdAt])
+}
+

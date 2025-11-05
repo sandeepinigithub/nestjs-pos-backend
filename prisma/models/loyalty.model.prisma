@@ -1,0 +1,106 @@
+// ============================================
+// Loyalty & Rewards Models
+// ============================================
+
+// Customer
+model Customer {
+  id          String   @id @default(cuid())
+  customerNumber String @unique // e.g., "CUST-2025-001234"
+  
+  // Personal Info
+  firstName   String
+  lastName    String
+  email       String?  @unique
+  phone       String?  @unique
+  
+  // Address
+  address     String?
+  city        String?
+  state       String?
+  postalCode  String?
+  country     String?
+  
+  // Loyalty
+  loyaltyPoints Int    @default(0)
+  tier         String? // e.g., "GOLD", "PLATINUM"
+  joinedAt     DateTime @default(now())
+  
+  // Preferences
+  preferences Json?    // e.g., favorite products, dietary restrictions
+  
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  orders      Order[]
+  loyaltyTransactions LoyaltyTransaction[]
+
+  @@map("customers")
+  @@index([customerNumber])
+  @@index([email])
+  @@index([phone])
+  @@index([isActive])
+}
+
+// Loyalty Program Configuration
+model LoyaltyProgram {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  
+  // Points Configuration
+  pointsPerDollar Decimal @db.Decimal(5, 2) // e.g., 1.5 points per dollar
+  pointsPerOrder  Int?    // Fixed points per order
+  
+  // Redemption Rules
+  redemptionRules Json?   // e.g., 100 points = $1 discount
+  
+  // Tiers
+  tiers       Json?    // Tier definitions and benefits
+  
+  // Validity
+  isActive    Boolean  @default(true)
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("loyalty_programs")
+  @@index([isActive])
+}
+
+// Loyalty Transaction
+model LoyaltyTransaction {
+  id          String   @id @default(cuid())
+  customerId  String
+  orderId     String?  // Related order (if applicable)
+  
+  // Transaction Details
+  transactionType LoyaltyTransactionType
+  points      Int     // Positive for earn, negative for redeem
+  balance     Int     // Balance after transaction
+  
+  // Reference
+  reference   String? // e.g., "Order #12345", "Promotion", "Adjustment"
+  notes       String?
+  
+  // Expiry (for earned points)
+  expiresAt   DateTime?
+  
+  createdAt   DateTime @default(now())
+  createdBy   String?
+
+  // Relations
+  customer    Customer @relation(fields: [customerId], references: [id])
+  order       Order?   @relation(fields: [orderId], references: [id])
+  createdByUser User?  @relation("LoyaltyTransactionCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("loyalty_transactions")
+  @@index([customerId])
+  @@index([orderId])
+  @@index([transactionType])
+  @@index([createdAt])
+}
+

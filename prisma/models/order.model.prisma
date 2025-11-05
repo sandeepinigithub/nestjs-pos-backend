@@ -1,0 +1,126 @@
+// ============================================
+// Order & Sales Models
+// ============================================
+
+// Order
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique // e.g., "ORD-2025-001234"
+  storeId         String
+  customerId      String?     // For registered customers
+  customerName    String?     // For guest orders
+  customerPhone   String?
+  customerEmail   String?
+  
+  // Order Details
+  status          OrderStatus @default(PENDING)
+  orderType       String?     // e.g., "DINE_IN", "TAKEAWAY", "DELIVERY"
+  
+  // Pricing
+  subtotal        Decimal     @db.Decimal(10, 2)
+  taxAmount       Decimal     @db.Decimal(10, 2)
+  discountAmount  Decimal    @default(0) @db.Decimal(10, 2)
+  totalAmount     Decimal     @db.Decimal(10, 2)
+  loyaltyPointsUsed Int?      @default(0)
+  loyaltyPointsEarned Int?    @default(0)
+  
+  // Payment
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   PaymentMethod?
+  
+  // Metadata
+  notes           String?
+  orderDate       DateTime    @default(now())
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  cancelledBy    String?
+  cancelledReason String?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  createdBy       String?
+  updatedBy       String?
+
+  // Relations
+  store           Store       @relation(fields: [storeId], references: [id])
+  customer        Customer?   @relation(fields: [customerId], references: [id])
+  orderItems      OrderItem[]
+  payments        Payment[]
+  loyaltyTransactions LoyaltyTransaction[]
+  createdByUser   User?       @relation("OrderCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser   User?       @relation("OrderUpdatedBy", fields: [updatedBy], references: [id])
+  cancelledByUser User?      @relation("OrderCancelledBy", fields: [cancelledBy], references: [id])
+
+  @@map("orders")
+  @@index([orderNumber])
+  @@index([storeId])
+  @@index([customerId])
+  @@index([status])
+  @@index([orderDate])
+  @@index([paymentStatus])
+}
+
+// Order Item
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String
+  taxId       String?
+  
+  // Item Details
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  taxRate     Decimal? @db.Decimal(5, 2)
+  taxAmount   Decimal  @default(0) @db.Decimal(10, 2)
+  discount    Decimal  @default(0) @db.Decimal(10, 2)
+  totalPrice  Decimal  @db.Decimal(10, 2)
+  
+  // Customizations
+  notes       String?
+  attributes  Json?    // e.g., size, add-ons, etc.
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id])
+  tax         Tax?     @relation(fields: [taxId], references: [id])
+
+  @@map("order_items")
+  @@index([orderId])
+  @@index([productId])
+}
+
+// Payment
+model Payment {
+  id              String         @id @default(cuid())
+  orderId         String
+  paymentMethod   PaymentMethod
+  amount          Decimal        @db.Decimal(10, 2)
+  status          PaymentStatus  @default(PENDING)
+  
+  // Transaction Details
+  transactionId   String?        @unique // External transaction ID
+  referenceNumber String?        // Payment reference
+  receiptUrl      String?        // Receipt/image URL
+  
+  // Metadata
+  processedAt      DateTime?
+  refundedAt      DateTime?
+  refundAmount    Decimal?       @db.Decimal(10, 2)
+  refundReason    String?
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  order           Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+  @@index([orderId])
+  @@index([transactionId])
+  @@index([status])
+  @@index([paymentMethod])
+}
+

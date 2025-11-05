@@ -1,0 +1,75 @@
+// ============================================
+// Inventory Management Models
+// ============================================
+
+// Inventory (Stock at store level)
+model Inventory {
+  id          String   @id @default(cuid())
+  productId   String
+  storeId     String
+  
+  // Stock Levels
+  quantity    Int      @default(0)
+  reservedQuantity Int @default(0) // Reserved for pending orders
+  availableQuantity Int @default(0) // quantity - reservedQuantity
+  
+  // Reordering
+  reorderLevel Int?    // Minimum stock level
+  maxLevel     Int?    // Maximum stock level
+  
+  // Location within store
+  location    String?  // e.g., "Aisle 1", "Freezer 2"
+  
+  // Last update
+  lastUpdated DateTime @default(now())
+  updatedBy   String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  product     Product  @relation(fields: [productId], references: [id])
+  store       Store    @relation(fields: [storeId], references: [id])
+  movements   InventoryMovement[]
+  updatedByUser User?  @relation("InventoryUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@unique([productId, storeId])
+  @@map("inventory")
+  @@index([productId])
+  @@index([storeId])
+  @@index([availableQuantity])
+}
+
+// Inventory Movement (Stock transactions)
+model InventoryMovement {
+  id          String   @id @default(cuid())
+  inventoryId String
+  movementType InventoryMovementType
+  
+  // Movement Details
+  quantity    Int      // Positive for IN, negative for OUT
+  reference   String?  // Reference to order, transfer, etc.
+  referenceId String?  // ID of related entity (orderId, transferId, etc.)
+  
+  // Reason
+  reason      String?
+  notes       String?
+  
+  // Cost (for accounting)
+  unitCost    Decimal? @db.Decimal(10, 2)
+  totalCost   Decimal? @db.Decimal(10, 2)
+  
+  createdAt   DateTime @default(now())
+  createdBy   String?
+
+  // Relations
+  inventory   Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  createdByUser User?   @relation("InventoryMovementCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("inventory_movements")
+  @@index([inventoryId])
+  @@index([movementType])
+  @@index([referenceId])
+  @@index([createdAt])
+}
+
