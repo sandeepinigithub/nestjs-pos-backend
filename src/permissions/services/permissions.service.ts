@@ -37,7 +37,11 @@ export class PermissionsService {
 
   async findAll(): Promise<PermissionResponseDto[]> {
     const permissions = await this.permissionRepository.findMany({
-      orderBy: [{ module: 'asc' }, { resource: 'asc' }, { action: 'asc' }],
+      orderBy: [
+        { module: 'asc' },
+        { resource: 'asc' },
+        { action: 'asc' },
+      ] as any,
     });
 
     return permissions.map((permission) => new PermissionResponseDto(permission));

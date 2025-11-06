@@ -31,7 +31,9 @@ export class CategoriesService {
       code: createCategoryDto.code,
       name: createCategoryDto.name,
       description: createCategoryDto.description,
-      parentId: createCategoryDto.parentId,
+      parent: createCategoryDto.parentId
+        ? { connect: { id: createCategoryDto.parentId } }
+        : undefined,
       image: createCategoryDto.image,
       displayOrder: createCategoryDto.displayOrder ?? 0,
       isActive: true,
@@ -63,7 +65,9 @@ export class CategoriesService {
       throw new NotFoundException('Category not found');
     }
 
-    return new CategoryResponseDto(category);
+    // Type assertion to include children if needed
+    const categoryWithChildren = category as typeof category & { children?: any[] };
+    return new CategoryResponseDto(categoryWithChildren);
   }
 
   async remove(id: string): Promise<void> {
@@ -73,7 +77,8 @@ export class CategoriesService {
     }
 
     // Check if category has children
-    if (category.children && category.children.length > 0) {
+    const categoryWithChildren = category as typeof category & { children?: any[] };
+    if (categoryWithChildren.children && categoryWithChildren.children.length > 0) {
       throw new BadRequestException('Cannot delete category with children. Please delete or reassign children first.');
     }
 

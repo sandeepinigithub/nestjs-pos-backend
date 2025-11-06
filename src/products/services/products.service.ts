@@ -32,7 +32,7 @@ export class ProductsService {
       attributes: createProductDto.attributes,
       tags: createProductDto.tags,
       isAvailable: createProductDto.isAvailable ?? true,
-      createdBy: currentUser?.id,
+      ...(currentUser?.id ? { createdBy: currentUser.id } : {}),
     });
 
     return new ProductResponseDto(product);
@@ -60,7 +60,7 @@ export class ProductsService {
           category: true,
         },
       }),
-      this.productRepository.count({ where }),
+      this.productRepository.count(where),
     ]);
 
     return {

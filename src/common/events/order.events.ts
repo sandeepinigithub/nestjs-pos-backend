@@ -7,8 +7,8 @@ export class OrderCreatedEvent {
     public readonly orderId: string,
     public readonly orderNumber: string,
     public readonly storeId: string,
-    public readonly customerId?: string,
     public readonly totalAmount: number,
+    public readonly customerId?: string,
     public readonly createdBy?: string,
   ) {}
 }

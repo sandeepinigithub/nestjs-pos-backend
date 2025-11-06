@@ -72,7 +72,7 @@ export class InventoryService {
         quantity: 0,
         reservedQuantity: 0,
         availableQuantity: 0,
-        updatedBy: currentUser?.id,
+        ...(currentUser?.id ? { updatedBy: currentUser.id } : {}),
       });
     }
 
@@ -93,7 +93,7 @@ export class InventoryService {
       quantity: newQuantity,
       availableQuantity: newAvailableQuantity,
       lastUpdated: new Date(),
-      updatedBy: currentUser?.id,
+      ...(currentUser?.id ? { updatedBy: currentUser.id } : {}),
     });
 
     // Create movement record
@@ -102,7 +102,7 @@ export class InventoryService {
       movementType,
       quantity: movementType === InventoryMovementType.IN || movementType === InventoryMovementType.RETURN ? quantity : -quantity,
       reason,
-      createdBy: currentUser?.id,
+      ...(currentUser?.id ? { createdBy: currentUser.id } : {}),
     });
 
     return new InventoryResponseDto(inventory);

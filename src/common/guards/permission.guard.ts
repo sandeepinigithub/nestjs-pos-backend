@@ -2,6 +2,7 @@ import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@
 import { Reflector } from '@nestjs/core';
 import { PermissionResource, PermissionAction } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UserResponseDto } from '../../users/dto/user-response.dto';
 
 export const PERMISSIONS_KEY = 'permissions';
 
@@ -68,16 +69,26 @@ export class PermissionGuard implements CanActivate {
           action,
         },
         isAllowed: true,
-        OR: [
-          { storeId: null }, // Global permission
-          { storeId }, // Store-specific permission
+        AND: [
+          {
+            OR: [
+              { storeId: null }, // Global permission
+              { storeId }, // Store-specific permission
+            ],
+          },
+          {
+            OR: [
+              {
+                expiresAt: {
+                  gt: new Date(),
+                },
+              },
+              {
+                expiresAt: null,
+              },
+            ],
+          },
         ],
-        expiresAt: {
-          OR: [
-            { gt: new Date() },
-            { equals: null },
-          ],
-        },
       },
     });
 

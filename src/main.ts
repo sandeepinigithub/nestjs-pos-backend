@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -16,8 +16,8 @@ async function bootstrap() {
   const requestIdMiddleware = new RequestIdMiddleware();
   const loggerMiddleware = new LoggerMiddleware();
   
-  app.use((req, res, next) => requestIdMiddleware.use(req, res, next));
-  app.use((req, res, next) => loggerMiddleware.use(req, res, next));
+  app.use(requestIdMiddleware.use.bind(requestIdMiddleware));
+  app.use(loggerMiddleware.use.bind(loggerMiddleware));
 
   // Get config service
   const configService = app.get(AppConfigService);

@@ -47,7 +47,7 @@ export interface ApiErrorResponse {
   requestId?: string;
 }
 
-export type ApiResponse<T = any> = ApiSuccessResponse<T> | ApiErrorResponse;
+export type ApiResponseType<T = any> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 export interface SwaggerApiResponse {
   description: string;

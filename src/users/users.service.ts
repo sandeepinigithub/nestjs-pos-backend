@@ -64,7 +64,7 @@ export class UsersService {
       phone: createUserDto.phone,
       role: createUserDto.role || UserRole.USER,
       status: UserStatus.PENDING_VERIFICATION,
-      createdBy: currentUser?.id,
+      ...(currentUser?.id ? { createdBy: currentUser.id } : {}),
     });
 
     return new UserResponseDto(user);
@@ -172,10 +172,11 @@ export class UsersService {
       }
     }
 
-    const updatedUser = await this.userRepository.update(id, {
-      ...updateUserDto,
-      updatedBy: currentUser?.id,
-    });
+    const updateData: any = { ...updateUserDto };
+    if (currentUser?.id) {
+      updateData.updatedBy = currentUser.id;
+    }
+    const updatedUser = await this.userRepository.update(id, updateData);
 
     return new UserResponseDto(updatedUser);
   }
@@ -230,10 +231,11 @@ export class UsersService {
     const hashedPassword = await this.authService.hashPassword(changePasswordDto.newPassword);
 
     // Update password using repository
-    await this.userRepository.update(id, {
-      password: hashedPassword,
-      updatedBy: currentUser?.id,
-    });
+    const updateData: any = { password: hashedPassword };
+    if (currentUser?.id) {
+      updateData.updatedBy = currentUser.id;
+    }
+    await this.userRepository.update(id, updateData);
   }
 
   async updateStatus(
@@ -252,10 +254,11 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const updatedUser = await this.userRepository.update(id, {
-      status,
-      updatedBy: currentUser?.id,
-    });
+    const updateData: any = { status };
+    if (currentUser?.id) {
+      updateData.updatedBy = currentUser.id;
+    }
+    const updatedUser = await this.userRepository.update(id, updateData);
 
     return new UserResponseDto(updatedUser);
   }

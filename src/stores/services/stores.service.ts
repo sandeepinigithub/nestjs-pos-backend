@@ -56,7 +56,7 @@ export class StoresService {
       licenseNumber: createStoreDto.licenseNumber,
       licenseExpiry: createStoreDto.licenseExpiry,
       openedAt: createStoreDto.openedAt,
-      createdBy: currentUser?.id,
+      ...(currentUser?.id ? { createdBy: currentUser.id } : {}),
     });
 
     return new StoreResponseDto(store);
@@ -85,7 +85,7 @@ export class StoresService {
           region: true,
         },
       }),
-      this.storeRepository.count({ where }),
+      this.storeRepository.count(where),
     ]);
 
     return {

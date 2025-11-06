@@ -38,10 +38,12 @@ export class GroupsService {
       name: createGroupDto.name,
       code: createGroupDto.code,
       description: createGroupDto.description,
-      parentId: createGroupDto.parentId,
+      parent: createGroupDto.parentId
+        ? { connect: { id: createGroupDto.parentId } }
+        : undefined,
       level,
       isActive: createGroupDto.isActive ?? true,
-      createdBy: currentUser?.id,
+      ...(currentUser?.id ? { createdBy: currentUser.id } : {}),
     });
 
     return new GroupResponseDto(group);
@@ -98,10 +100,11 @@ export class GroupsService {
       }
     }
 
-    const updatedGroup = await this.groupRepository.update(id, {
-      ...updateGroupDto,
-      updatedBy: currentUser?.id,
-    });
+    const updateData: any = { ...updateGroupDto };
+    if (currentUser?.id) {
+      updateData.updatedBy = currentUser.id;
+    }
+    const updatedGroup = await this.groupRepository.update(id, updateData);
 
     return new GroupResponseDto(updatedGroup);
   }

@@ -33,7 +33,7 @@ export class OrdersService {
 
     // Calculate totals
     let subtotal = 0;
-    const orderItems = [];
+    const orderItems: any[] = [];
 
     for (const item of createOrderDto.items) {
       const product = await this.prisma.product.findUnique({
@@ -49,17 +49,21 @@ export class OrdersService {
         throw new NotFoundException(`Product with ID ${item.productId} not found`);
       }
 
-      const unitPrice = item.unitPrice || product.productStores[0]?.price || Number(product.basePrice);
-      const itemSubtotal = unitPrice * item.quantity;
+      const unitPrice = item.unitPrice 
+        ? Number(item.unitPrice) 
+        : product.productStores[0]?.price 
+        ? Number(product.productStores[0].price) 
+        : Number(product.basePrice || 0);
+      const itemSubtotal = Number(unitPrice) * Number(item.quantity);
       subtotal += itemSubtotal;
 
       orderItems.push({
-        productId: item.productId,
+        product: { connect: { id: item.productId } },
         quantity: item.quantity,
-        unitPrice,
+        unitPrice: Number(unitPrice),
         taxAmount: 0, // Calculate tax later
         discount: 0,
-        totalPrice: itemSubtotal,
+        totalPrice: Number(itemSubtotal),
         notes: item.notes,
         attributes: item.attributes,
       });
@@ -91,7 +95,7 @@ export class OrdersService {
       orderItems: {
         create: orderItems,
       },
-      createdBy: currentUser?.id,
+      ...(currentUser?.id ? { createdBy: currentUser.id } : {}),
     });
 
     return new OrderResponseDto(order);
@@ -125,7 +129,7 @@ export class OrdersService {
           },
         },
       }),
-      this.orderRepository.count({ where }),
+      this.orderRepository.count(where),
     ]);
 
     return {
