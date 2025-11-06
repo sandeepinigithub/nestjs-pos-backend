@@ -15,11 +15,14 @@ import { InventoryModule } from './inventory/inventory.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { AuditModule } from './audit/audit.module';
 import { SyncModule } from './sync/sync.module';
+import { HealthModule } from './health/health.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
     ConfigModule,
     PrismaModule,
+    CommonModule,
     AuthModule,
     UsersModule,
     GroupsModule,
@@ -32,6 +35,7 @@ import { SyncModule } from './sync/sync.module';
     LoyaltyModule,
     AuditModule,
     SyncModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

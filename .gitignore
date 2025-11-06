@@ -46,3 +46,8 @@ lerna-debug.log*
 # Accidental files
 nestjs-pos-backend@*
 ts-node
+
+# Logs and storage
+logs/
+storage/
+*.log

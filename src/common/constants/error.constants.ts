@@ -1,0 +1,115 @@
+/**
+ * Error codes and messages
+ */
+
+export const ERROR_CODES = {
+  // Authentication Errors (1000-1099)
+  AUTH_INVALID_CREDENTIALS: 'AUTH_1001',
+  AUTH_TOKEN_EXPIRED: 'AUTH_1002',
+  AUTH_TOKEN_INVALID: 'AUTH_1003',
+  AUTH_UNAUTHORIZED: 'AUTH_1004',
+  AUTH_FORBIDDEN: 'AUTH_1005',
+  
+  // User Errors (1100-1199)
+  USER_NOT_FOUND: 'USER_1101',
+  USER_ALREADY_EXISTS: 'USER_1102',
+  USER_INACTIVE: 'USER_1103',
+  USER_SUSPENDED: 'USER_1104',
+  USER_EMAIL_EXISTS: 'USER_1105',
+  USER_USERNAME_EXISTS: 'USER_1106',
+  USER_PASSWORD_INVALID: 'USER_1107',
+  
+  // Validation Errors (1200-1299)
+  VALIDATION_FAILED: 'VAL_1201',
+  VALIDATION_INVALID_EMAIL: 'VAL_1202',
+  VALIDATION_INVALID_PHONE: 'VAL_1203',
+  VALIDATION_INVALID_PASSWORD: 'VAL_1204',
+  VALIDATION_REQUIRED_FIELD: 'VAL_1205',
+  
+  // Permission Errors (1300-1399)
+  PERMISSION_DENIED: 'PERM_1301',
+  PERMISSION_INSUFFICIENT: 'PERM_1302',
+  PERMISSION_NOT_FOUND: 'PERM_1303',
+  
+  // Store Errors (1400-1499)
+  STORE_NOT_FOUND: 'STORE_1401',
+  STORE_ALREADY_EXISTS: 'STORE_1402',
+  STORE_INACTIVE: 'STORE_1403',
+  STORE_CODE_EXISTS: 'STORE_1404',
+  
+  // Product Errors (1500-1599)
+  PRODUCT_NOT_FOUND: 'PROD_1501',
+  PRODUCT_ALREADY_EXISTS: 'PROD_1502',
+  PRODUCT_CODE_EXISTS: 'PROD_1503',
+  PRODUCT_OUT_OF_STOCK: 'PROD_1504',
+  
+  // Order Errors (1600-1699)
+  ORDER_NOT_FOUND: 'ORDER_1601',
+  ORDER_INVALID_STATUS: 'ORDER_1602',
+  ORDER_CANNOT_BE_CANCELLED: 'ORDER_1603',
+  ORDER_ITEMS_REQUIRED: 'ORDER_1604',
+  
+  // Inventory Errors (1700-1799)
+  INVENTORY_NOT_FOUND: 'INV_1701',
+  INVENTORY_INSUFFICIENT: 'INV_1702',
+  INVENTORY_INVALID_QUANTITY: 'INV_1703',
+  
+  // Generic Errors (1900-1999)
+  INTERNAL_SERVER_ERROR: 'ERR_1901',
+  NOT_FOUND: 'ERR_1902',
+  BAD_REQUEST: 'ERR_1903',
+  CONFLICT: 'ERR_1904',
+  UNPROCESSABLE_ENTITY: 'ERR_1905',
+} as const;
+
+export const ERROR_MESSAGES = {
+  [ERROR_CODES.AUTH_INVALID_CREDENTIALS]: 'Invalid email or password',
+  [ERROR_CODES.AUTH_TOKEN_EXPIRED]: 'Token has expired',
+  [ERROR_CODES.AUTH_TOKEN_INVALID]: 'Invalid token',
+  [ERROR_CODES.AUTH_UNAUTHORIZED]: 'Unauthorized access',
+  [ERROR_CODES.AUTH_FORBIDDEN]: 'Access forbidden',
+  
+  [ERROR_CODES.USER_NOT_FOUND]: 'User not found',
+  [ERROR_CODES.USER_ALREADY_EXISTS]: 'User already exists',
+  [ERROR_CODES.USER_INACTIVE]: 'User account is inactive',
+  [ERROR_CODES.USER_SUSPENDED]: 'User account is suspended',
+  [ERROR_CODES.USER_EMAIL_EXISTS]: 'Email already registered',
+  [ERROR_CODES.USER_USERNAME_EXISTS]: 'Username already taken',
+  [ERROR_CODES.USER_PASSWORD_INVALID]: 'Invalid password',
+  
+  [ERROR_CODES.VALIDATION_FAILED]: 'Validation failed',
+  [ERROR_CODES.VALIDATION_INVALID_EMAIL]: 'Invalid email format',
+  [ERROR_CODES.VALIDATION_INVALID_PHONE]: 'Invalid phone number',
+  [ERROR_CODES.VALIDATION_INVALID_PASSWORD]: 'Password does not meet requirements',
+  [ERROR_CODES.VALIDATION_REQUIRED_FIELD]: 'Required field is missing',
+  
+  [ERROR_CODES.PERMISSION_DENIED]: 'Permission denied',
+  [ERROR_CODES.PERMISSION_INSUFFICIENT]: 'Insufficient permissions',
+  [ERROR_CODES.PERMISSION_NOT_FOUND]: 'Permission not found',
+  
+  [ERROR_CODES.STORE_NOT_FOUND]: 'Store not found',
+  [ERROR_CODES.STORE_ALREADY_EXISTS]: 'Store already exists',
+  [ERROR_CODES.STORE_INACTIVE]: 'Store is inactive',
+  [ERROR_CODES.STORE_CODE_EXISTS]: 'Store code already exists',
+  
+  [ERROR_CODES.PRODUCT_NOT_FOUND]: 'Product not found',
+  [ERROR_CODES.PRODUCT_ALREADY_EXISTS]: 'Product already exists',
+  [ERROR_CODES.PRODUCT_CODE_EXISTS]: 'Product code already exists',
+  [ERROR_CODES.PRODUCT_OUT_OF_STOCK]: 'Product is out of stock',
+  
+  [ERROR_CODES.ORDER_NOT_FOUND]: 'Order not found',
+  [ERROR_CODES.ORDER_INVALID_STATUS]: 'Invalid order status',
+  [ERROR_CODES.ORDER_CANNOT_BE_CANCELLED]: 'Order cannot be cancelled',
+  [ERROR_CODES.ORDER_ITEMS_REQUIRED]: 'Order must have at least one item',
+  
+  [ERROR_CODES.INVENTORY_NOT_FOUND]: 'Inventory record not found',
+  [ERROR_CODES.INVENTORY_INSUFFICIENT]: 'Insufficient inventory',
+  [ERROR_CODES.INVENTORY_INVALID_QUANTITY]: 'Invalid quantity',
+  
+  [ERROR_CODES.INTERNAL_SERVER_ERROR]: 'Internal server error',
+  [ERROR_CODES.NOT_FOUND]: 'Resource not found',
+  [ERROR_CODES.BAD_REQUEST]: 'Bad request',
+  [ERROR_CODES.CONFLICT]: 'Resource conflict',
+  [ERROR_CODES.UNPROCESSABLE_ENTITY]: 'Unprocessable entity',
+} as const;
+
