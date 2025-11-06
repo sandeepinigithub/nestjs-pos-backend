@@ -41,12 +41,22 @@ async function bootstrap() {
 
   // Swagger documentation
   const config = new DocumentBuilder()
-    .setTitle('POS Backend API')
-    .setDescription('Point of Sale System Backend API Documentation')
+    .setTitle('Enterprise POS Backend API')
+    .setDescription('Enterprise Point of Sale System - Multi-Store, Multi-Tenant Backend API Documentation')
     .setVersion('1.0')
     .addBearerAuth()
     .addTag('Authentication', 'User authentication endpoints')
     .addTag('Users', 'User management endpoints')
+    .addTag('Groups', 'Group management with hierarchy')
+    .addTag('Permissions', 'Permission management')
+    .addTag('Stores', 'Store management (Company-owned, Licensed, Joint Venture)')
+    .addTag('Categories', 'Product category management')
+    .addTag('Products', 'Product/menu management')
+    .addTag('Orders', 'Order processing and management')
+    .addTag('Inventory', 'Inventory and stock management')
+    .addTag('Customers', 'Customer and loyalty management')
+    .addTag('Audit', 'Audit logging and tracking')
+    .addTag('Sync', 'Data synchronization (Store → Regional → Global)')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
