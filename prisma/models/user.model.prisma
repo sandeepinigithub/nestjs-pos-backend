@@ -19,6 +19,9 @@ model User {
   passwordResetAt   DateTime?
   profileImage      String?
   
+  // Multi-tenant support
+  tenantId          String?     // Tenant/Brand the user belongs to
+  
   // Multi-store support
   defaultStoreId    String?     // Default store for the user
   
@@ -32,6 +35,9 @@ model User {
   updatedUsers      User[]      @relation("UserUpdatedBy")
   createdByUser     User?       @relation("UserCreatedBy", fields: [createdBy], references: [id])
   updatedByUser     User?       @relation("UserUpdatedBy", fields: [updatedBy], references: [id])
+  
+  // Relations - Multi-tenant
+  tenant            Tenant?     @relation("UserTenant", fields: [tenantId], references: [id])
   
   // Relations - Multi-store
   defaultStore      Store?      @relation("UserDefaultStore", fields: [defaultStoreId], references: [id])
@@ -48,6 +54,7 @@ model User {
   // Relations - Permission Management
   groupPermissionsGranted GroupPermission[] @relation("GroupPermissionGrantedBy")
   userPermissionsGranted  UserPermission[]  @relation("UserPermissionGrantedBy")
+  rolePermissionsGranted  RolePermission[]   @relation("RolePermissionGrantedBy")
   userGroupsAssigned      UserGroup[]       @relation("UserGroupAssignedBy")
   userStoresAssigned      UserStore[]       @relation("UserStoreAssignedBy")
   
@@ -81,12 +88,39 @@ model User {
   
   // Relations - Audit
   auditLogs         AuditLog[]
+  
+  // Relations - Tenant Management
+  tenantsCreated    Tenant[]    @relation("TenantCreatedBy")
+  tenantsUpdated    Tenant[]    @relation("TenantUpdatedBy")
+  subscriptionsCreated Subscription[] @relation("SubscriptionCreatedBy")
+  
+  // Relations - Purchase Management
+  suppliersCreated  Supplier[]  @relation("SupplierCreatedBy")
+  suppliersUpdated  Supplier[]  @relation("SupplierUpdatedBy")
+  purchaseOrdersCreated PurchaseOrder[] @relation("PurchaseOrderCreatedBy")
+  purchaseOrdersUpdated PurchaseOrder[] @relation("PurchaseOrderUpdatedBy")
+  purchaseOrdersApproved PurchaseOrder[] @relation("PurchaseOrderApprovedBy")
+  purchaseOrdersRejected PurchaseOrder[] @relation("PurchaseOrderRejectedBy")
+  grnsCreated       GRN[]       @relation("GRNCreatedBy")
+  grnsReceived      GRN[]       @relation("GRNReceivedBy")
+  grnsQualityChecked GRN[]      @relation("GRNQualityCheckedBy")
+  
+  // Relations - Sales Management
+  ordersHeld        Order[]      @relation("OrderHeldBy")
+  ordersResumed    Order[]      @relation("OrderResumedBy")
+  kotsCreated       KOT[]       @relation("KOTCreatedBy")
+  tastingsCreated   Tasting[]   @relation("TastingCreatedBy")
+  bogoOffersCreated BOGOOffer[] @relation("BOGOCreatedBy")
+  bogoOffersUpdated BOGOOffer[] @relation("BOGOUpdatedBy")
+  bogoApplications  BOGOApplication[] @relation("BOGOAppliedBy")
+  vouchersRedeemed  BOGOVoucher[] @relation("VoucherRedeemedBy")
 
   @@map("users")
   @@index([email])
   @@index([username])
   @@index([role])
   @@index([status])
+  @@index([tenantId])
   @@index([defaultStoreId])
 }
 

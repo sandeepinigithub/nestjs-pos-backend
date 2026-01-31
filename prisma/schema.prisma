@@ -19,17 +19,274 @@ datasource db {
 // Auto-generated - DO NOT EDIT MANUALLY
 // ============================================
 
+// --- bogo.model.prisma ---
+// ============================================
+// BOGO (Buy One Get One) Offers Models
+// ============================================
+
+enum BOGOType {
+  BUY_X_GET_X_SAME           // Case 1: Buy X → Get X (Same Item Free)
+  BUY_X_GET_Y_DIFFERENT      // Case 2: Buy X → Get Y (Different Item Free)
+  BUY_X_GET_Y_PERCENT_OFF    // Case 3: Buy X → Get % Off on Y
+  BUY_COMBO_GET_FREE         // Case 4: Buy Combo → Get Free Item
+  BUY_X_GET_Y_FLAT_PRICE     // Case 5: Buy X → Get Y at Flat Price
+  REPEATABLE_MULTI_CYCLE     // Case 6: Repeatable BOGO (Multi-Cycle)
+  LIMIT_BASED                // Case 7: Limit-Based BOGO
+  MIX_MATCH_GROUP            // Case 8: Mix & Match BOGO (Group Items)
+  CATEGORY_BASED             // Case 9: Category-Based BOGO
+  BILL_AMOUNT_FREE_ITEM      // Case 10: Bill Amount → Free Item
+  BILL_AMOUNT_DISCOUNT       // Case 11: Bill Amount → Discount on Item
+  TIME_BASED                 // Case 12: Time-Based Offer
+  CHANNEL_BASED              // Case 13: Channel-Based Offer
+  CUSTOMER_TYPE_BASED        // Case 14: Customer-Type Based Offer
+  MANUAL_CASHIER             // Case 15: Manual BOGO (Cashier Applied)
+  FALLBACK_ITEM              // Case 16: Fallback Item BOGO
+  COUPON_CODE                // Case 17: Coupon Code Based BOGO
+  SLAB_BASED                 // Case 18: Slab-Based BOGO (Tiered Quantities)
+  CUSTOMER_CHOICE            // Case 19: Buy X → Customer Chooses Free Item
+  PROGRESSIVE_DISCOUNT       // Case 20: Progressive Discount BOGO
+  TIERED_MULTI_LEVEL         // Case 21: Tiered BOGO (Multi-Level Rewards)
+  MAX_PRICE_RULE             // Case 22: BOGO with Maximum Price Rule
+  LOCATION_SPECIFIC          // Case 23: Location-Specific BOGO
+  QTY_BILL_CONDITION         // Case 24: BOGO with Qty + Bill Amount Condition
+  NEXT_VISIT_VOUCHER         // Case 25: Next-Visit BOGO (Voucher Based)
+}
+
+enum BOGOStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  SCHEDULED
+}
+
+enum BOGOTriggerType {
+  PRODUCT
+  CATEGORY
+  COMBO
+  BILL_AMOUNT
+  CUSTOMER_TYPE
+  MANUAL
+  COUPON
+}
+
+enum BOGORewardType {
+  FREE_ITEM
+  PERCENTAGE_DISCOUNT
+  FLAT_DISCOUNT
+  FLAT_PRICE
+  CUSTOMER_CHOICE
+}
+
+enum CustomerType {
+  NEW
+  RETURNING
+  LOYALTY
+  ALL
+}
+
+enum OrderChannel {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+  ONLINE
+  ALL
+}
+
+// BOGO Offer Model
+model BOGOOffer {
+  id                String      @id @default(cuid())
+  code              String      @unique // Offer code (e.g., "BOGO001", "COFFEE50")
+  name              String      // Offer name
+  description       String?
+  type              BOGOType
+  
+  // Status
+  status            BOGOStatus @default(ACTIVE)
+  
+  // Trigger Configuration (JSON for flexibility)
+  triggerConfig     Json        // Trigger conditions based on type
+  // Examples:
+  // - Product-based: { productIds: ["id1", "id2"], quantity: 1 }
+  // - Category-based: { categoryIds: ["cat1"], quantity: 1 }
+  // - Combo: { comboItems: [{productId: "id1", quantity: 1}, {productId: "id2", quantity: 1}] }
+  // - Bill amount: { minBillAmount: 500 }
+  // - Customer type: { customerTypes: ["NEW", "RETURNING"] }
+  
+  // Reward Configuration (JSON for flexibility)
+  rewardConfig      Json        // Reward details based on type
+  // Examples:
+  // - Free item: { productId: "id2", quantity: 1, maxPrice: 80 }
+  // - Percentage discount: { productId: "id2", discountPercent: 50 }
+  // - Flat price: { productId: "id2", flatPrice: 20 }
+  // - Customer choice: { productIds: ["id1", "id2", "id3"], quantity: 1 }
+  // - Slab-based: { slabs: [{buyQty: 2, getQty: 1}, {buyQty: 4, getQty: 2}] }
+  
+  // Conditions
+  minBillAmount     Decimal?    @db.Decimal(10, 2) // Minimum bill amount (for cases 10, 11, 24)
+  maxFreeItems      Int?        // Maximum free items per order (Case 7)
+  maxUsagePerOrder  Int?        // Maximum times offer can be used per order
+  maxUsagePerCustomer Int?     // Maximum times offer can be used per customer
+  maxUsageTotal     Int?        // Maximum total usage across all customers
+  
+  // Time Restrictions
+  validFrom         DateTime?
+  validTo           DateTime?
+  timeRestrictions  Json?       // { startTime: "14:00", endTime: "19:00", days: ["MON", "TUE"] }
+  
+  // Channel Restrictions
+  orderChannels     OrderChannel[] // Case 13: Channel-Based Offer
+  
+  // Customer Type Restrictions
+  customerTypes     CustomerType[] // Case 14: Customer-Type Based Offer
+  
+  // Location Restrictions
+  storeIds          String[]    // Case 23: Location-Specific BOGO
+  tenantId          String?     // Tenant-specific offer
+  
+  // Fallback Configuration (Case 16)
+  fallbackConfig    Json?       // { fallbackProductIds: ["id1", "id2"] }
+  
+  // Progressive/Tiered Configuration (Cases 18, 20, 21)
+  tierConfig        Json?       // Tiered rewards configuration
+  
+  // Repeatable Configuration (Case 6)
+  repeatable        Boolean     @default(false)
+  repeatCycle       Int?        // How many times it repeats (e.g., Buy 2 Get 1 = cycle of 3)
+  
+  // Coupon Code (Case 17)
+  couponCode        String?     @unique
+  requiresCoupon    Boolean     @default(false)
+  
+  // Manual Application (Case 15)
+  allowManual       Boolean     @default(false) // Can cashier manually apply
+  
+  // Priority (for multiple applicable offers)
+  priority          Int         @default(0) // Higher priority = applied first
+  
+  // Metadata
+  isActive          Boolean     @default(true)
+  usageCount        Int         @default(0) // Total times used
+  notes             String?
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  createdBy         String?
+  updatedBy         String?
+
+  // Relations
+  tenant            Tenant?     @relation(fields: [tenantId], references: [id])
+  applications     BOGOApplication[]
+  vouchers          BOGOVoucher[]
+  createdByUser     User?       @relation("BOGOCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser     User?       @relation("BOGOUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("bogo_offers")
+  @@index([code])
+  @@index([couponCode])
+  @@index([status])
+  @@index([type])
+  @@index([tenantId])
+  @@index([isActive])
+  @@index([validFrom])
+  @@index([validTo])
+}
+
+// BOGO Application (when offer is applied to an order)
+model BOGOApplication {
+  id                String      @id @default(cuid())
+  bogoOfferId       String
+  orderId           String
+  
+  // Application Details
+  appliedAt         DateTime    @default(now())
+  appliedBy         String?
+  discountAmount    Decimal     @db.Decimal(10, 2) // Total discount applied
+  freeItemsCount    Int         @default(0)
+  
+  // Application Details (JSON for flexibility)
+  applicationDetails Json?       // Details of what was applied
+  // Example: { triggerItems: [{itemId: "x", quantity: 1}], rewardItems: [{productId: "y", quantity: 1, discount: 0}] }
+  
+  // Manual Application Flag
+  isManual          Boolean     @default(false)
+  
+  // Coupon Used
+  couponCode        String?
+  
+  createdAt         DateTime    @default(now())
+
+  // Relations
+  bogoOffer         BOGOOffer   @relation(fields: [bogoOfferId], references: [id])
+  order             Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  appliedByUser     User?       @relation("BOGOAppliedBy", fields: [appliedBy], references: [id])
+
+  @@map("bogo_applications")
+  @@index([bogoOfferId])
+  @@index([orderId])
+  @@index([appliedAt])
+  @@index([couponCode])
+}
+
+// BOGO Voucher (for Next-Visit BOGO - Case 25)
+model BOGOVoucher {
+  id                String      @id @default(cuid())
+  voucherCode       String      @unique // Voucher code/QR code
+  bogoOfferId       String
+  orderId           String      // Order that generated this voucher
+  customerId        String?     // Customer who earned the voucher
+  
+  // Voucher Details
+  status            String      @default("PENDING") // PENDING, REDEEMED, EXPIRED
+  validFrom         DateTime    @default(now())
+  validTo           DateTime?
+  
+  // Reward Details
+  rewardConfig      Json        // What the voucher entitles to
+  
+  // Usage
+  redeemedAt        DateTime?
+  redeemedOrderId   String?     // Order where voucher was redeemed
+  redeemedBy        String?
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  bogoOffer         BOGOOffer   @relation(fields: [bogoOfferId], references: [id])
+  order             Order       @relation("VoucherGeneratedFrom", fields: [orderId], references: [id])
+  customer          Customer?   @relation(fields: [customerId], references: [id])
+  redeemedOrder     Order?      @relation("VoucherRedeemedIn", fields: [redeemedOrderId], references: [id])
+  redeemedByUser    User?       @relation("VoucherRedeemedBy", fields: [redeemedBy], references: [id])
+
+  @@map("bogo_vouchers")
+  @@index([voucherCode])
+  @@index([bogoOfferId])
+  @@index([orderId])
+  @@index([customerId])
+  @@index([status])
+  @@index([validTo])
+}
+
 // --- enums.prisma ---
 // ============================================
 // Enums - Extended for Enterprise POS System
 // ============================================
 
 enum UserRole {
-  SUPER_ADMIN
-  ADMIN
-  MANAGER
-  CASHIER
-  USER
+  // Platform Level
+  SUPER_ADMIN          // Platform Admin - manages all tenants
+  TENANT_ADMIN         // Tenant Admin (Brand) - manages tenant stores and users
+  STORE_ADMIN          // Store Admin (CompanyOwned or FranchiseOwned)
+  STORE_MANAGER        // Store Manager - manages store operations
+  CASHIER              // Cashier - handles POS sales and billing
+  KITCHEN_STAFF        // Kitchen Staff (KDS) - manages kitchen orders
+  INVENTORY_MANAGER    // Inventory Manager - manages inventory
+  PURCHASE_MANAGER     // Purchase Manager - manages purchases
+  ACCOUNTANT           // Accountant - financial view access
+  SUPPORT_STAFF        // Support Staff - view access
+  SYSTEM_AUDITOR       // System Auditor - compliance and logs access
+  HR_MANAGER           // HR Manager - user management view
+  USER                 // Generic user (legacy)
 }
 
 enum UserStatus {
@@ -41,8 +298,48 @@ enum UserStatus {
 
 enum StoreType {
   COMPANY_OWNED
+  FRANCHISE_OWNED
   LICENSED
   JOINT_VENTURE
+}
+
+enum TenantStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  TRIAL
+  EXPIRED
+}
+
+enum SubscriptionPlan {
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+  CUSTOM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  EXPIRED
+  TRIAL
+}
+
+enum PermissionModule {
+  DASHBOARD
+  INVENTORY
+  SALES
+  PURCHASES
+  REPORTS
+  USER_MANAGEMENT
+  ADMINISTRATION
+  POS_SALE
+  KITCHEN_DISPLAY_SYSTEM
+  STORE_MANAGEMENT
+  PRODUCT_MANAGEMENT
+  ORDER_MANAGEMENT
+  SYSTEM
 }
 
 enum StoreStatus {
@@ -195,6 +492,32 @@ enum TaxType {
   CUSTOM
 }
 
+enum PurchaseOrderStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  ORDERED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+  REJECTED
+}
+
+enum GRNStatus {
+  PENDING
+  PARTIAL
+  COMPLETED
+  CANCELLED
+}
+
+enum DeliveryStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  DELAYED
+  CANCELLED
+}
+
 // --- inventory.model.prisma ---
 // ============================================
 // Inventory Management Models
@@ -309,6 +632,7 @@ model Customer {
   // Relations
   orders      Order[]
   loyaltyTransactions LoyaltyTransaction[]
+  bogoVouchers BOGOVoucher[]
 
   @@map("customers")
   @@index([customerNumber])
@@ -409,6 +733,14 @@ model Order {
   paymentStatus   PaymentStatus @default(PENDING)
   paymentMethod   PaymentMethod?
   
+  // Order Hold/Resume
+  isHeld          Boolean     @default(false)
+  heldAt          DateTime?
+  heldBy          String?
+  heldReason      String?
+  resumedAt       DateTime?
+  resumedBy       String?
+  
   // Metadata
   notes           String?
   orderDate       DateTime    @default(now())
@@ -431,6 +763,13 @@ model Order {
   createdByUser   User?       @relation("OrderCreatedBy", fields: [createdBy], references: [id])
   updatedByUser   User?       @relation("OrderUpdatedBy", fields: [updatedBy], references: [id])
   cancelledByUser User?      @relation("OrderCancelledBy", fields: [cancelledBy], references: [id])
+  heldByUser      User?       @relation("OrderHeldBy", fields: [heldBy], references: [id])
+  resumedByUser   User?       @relation("OrderResumedBy", fields: [resumedBy], references: [id])
+  kots            KOT[]
+  tastings        Tasting[]
+  bogoApplications BOGOApplication[]
+  vouchersGenerated BOGOVoucher[] @relation("VoucherGeneratedFrom")
+  vouchersRedeemed BOGOVoucher[] @relation("VoucherRedeemedIn")
 
   @@map("orders")
   @@index([orderNumber])
@@ -439,6 +778,67 @@ model Order {
   @@index([status])
   @@index([orderDate])
   @@index([paymentStatus])
+  @@index([isHeld])
+}
+
+// KOT (Kitchen Order Ticket)
+model KOT {
+  id                String   @id @default(cuid())
+  kotNumber         String   @unique // e.g., "KOT-2025-001234"
+  orderId           String
+  storeId           String
+  
+  // KOT Details
+  status            String   @default("PENDING") // PENDING, SENT, PREPARING, READY, COMPLETED
+  items             Json     // Array of order items for kitchen
+  tableNumber       String?
+  notes             String?
+  
+  // Timing
+  sentAt            DateTime @default(now())
+  completedAt       DateTime?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdBy         String?
+
+  // Relations
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  store             Store    @relation(fields: [storeId], references: [id])
+  createdByUser     User?    @relation("KOTCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("kots")
+  @@index([kotNumber])
+  @@index([orderId])
+  @@index([storeId])
+  @@index([status])
+  @@index([sentAt])
+}
+
+// Tasting Tracking
+model Tasting {
+  id                String   @id @default(cuid())
+  orderId           String
+  productId         String
+  
+  // Tasting Details
+  quantity          Int      @default(1)
+  tastingType       String   @default("SAMPLE") // SAMPLE, COMPLIMENTARY, PROMOTIONAL
+  customerFeedback  String?  // Customer feedback on tasting
+  notes             String?
+  
+  createdAt         DateTime @default(now())
+  createdBy         String?
+
+  // Relations
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product           Product  @relation(fields: [productId], references: [id])
+  createdByUser     User?    @relation("TastingCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("tastings")
+  @@index([orderId])
+  @@index([productId])
+  @@index([createdAt])
 }
 
 // Order Item
@@ -547,7 +947,7 @@ model Permission {
   action      PermissionAction
   name        String  // e.g., "Create User", "View Sales Report"
   description String?
-  module      String? // e.g., "USER_MANAGEMENT", "REPORTS", "INVENTORY"
+  module      PermissionModule? // Module category
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -556,6 +956,7 @@ model Permission {
   groupPermissions GroupPermission[]
   userPermissions UserPermission[]
   accessPermissions AccessPermission[]
+  rolePermissions RolePermission[]
 
   @@unique([resource, action])
   @@map("permissions")
@@ -663,6 +1064,28 @@ model UserGroup {
   @@index([storeId])
 }
 
+// Role-Permission mapping (Direct role-based permissions)
+model RolePermission {
+  id            String   @id @default(cuid())
+  role          UserRole
+  permissionId  String
+  isAllowed     Boolean  @default(true)
+  conditions    Json?    // Additional conditions (e.g., store-specific, time-based)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  grantedBy     String?
+
+  // Relations
+  permission    Permission @relation(fields: [permissionId], references: [id])
+  grantedByUser User?      @relation("RolePermissionGrantedBy", fields: [grantedBy], references: [id])
+
+  @@unique([role, permissionId])
+  @@map("role_permissions")
+  @@index([role])
+  @@index([permissionId])
+  @@index([isAllowed])
+}
+
 // --- product.model.prisma ---
 // ============================================
 // Product & Menu Models
@@ -721,6 +1144,8 @@ model Product {
   productStores   ProductStore[]
   orderItems      OrderItem[]
   inventory       Inventory[]
+  purchaseOrderItems PurchaseOrderItem[]
+  tastings        Tasting[]
   createdByUser   User?    @relation("ProductCreatedBy", fields: [createdBy], references: [id])
   updatedByUser   User?    @relation("ProductUpdatedBy", fields: [updatedBy], references: [id])
 
@@ -785,6 +1210,228 @@ model Tax {
   @@index([isActive])
 }
 
+// --- purchase.model.prisma ---
+// ============================================
+// Purchase Management Models
+// ============================================
+// Note: PurchaseOrderStatus, GRNStatus, and DeliveryStatus enums are defined in enums.prisma
+
+// Supplier/Vendor Model
+model Supplier {
+  id                String   @id @default(cuid())
+  code              String   @unique // Supplier code (e.g., "SUP001")
+  name              String
+  contactPerson     String?
+  email             String?
+  phone             String?
+  mobile            String?
+  
+  // Address
+  address           String?
+  city              String?
+  state             String?
+  postalCode        String?
+  country           String?
+  
+  // Tax Information
+  taxId             String?  // Tax ID/GST Number
+  taxType           String?  // GST, VAT, etc.
+  
+  // Payment Terms
+  paymentTerms      String?  // e.g., "Net 30", "COD"
+  creditLimit       Decimal?  @db.Decimal(10, 2)
+  
+  // Status
+  isActive          Boolean  @default(true)
+  rating            Int?     // Supplier rating (1-5)
+  notes             String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdBy         String?
+  updatedBy         String?
+
+  // Relations
+  purchaseOrders    PurchaseOrder[]
+  createdByUser     User?    @relation("SupplierCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser     User?    @relation("SupplierUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("suppliers")
+  @@index([code])
+  @@index([name])
+  @@index([isActive])
+}
+
+// Purchase Order Model
+model PurchaseOrder {
+  id                    String              @id @default(cuid())
+  orderNumber            String              @unique // e.g., "PO-2025-001234"
+  supplierId             String
+  storeId                String
+  
+  // Order Details
+  status                 PurchaseOrderStatus @default(DRAFT)
+  orderDate              DateTime            @default(now())
+  expectedDeliveryDate   DateTime?
+  actualDeliveryDate     DateTime?
+  
+  // Pricing
+  subtotal               Decimal             @db.Decimal(10, 2)
+  taxAmount              Decimal             @default(0) @db.Decimal(10, 2)
+  discountAmount         Decimal             @default(0) @db.Decimal(10, 2)
+  totalAmount            Decimal             @db.Decimal(10, 2)
+  
+  // Delivery
+  deliveryStatus         DeliveryStatus      @default(PENDING)
+  deliveryAddress        String?
+  trackingNumber         String?
+  
+  // Approval
+  requiresApproval       Boolean             @default(false)
+  approvedBy             String?
+  approvedAt             DateTime?
+  rejectedBy             String?
+  rejectedAt             DateTime?
+  rejectionReason        String?
+  
+  // Metadata
+  notes                  String?
+  reference              String?            // External reference
+  currency               String              @default("USD")
+  
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  createdBy              String?
+  updatedBy              String?
+
+  // Relations
+  supplier               Supplier            @relation(fields: [supplierId], references: [id])
+  store                  Store               @relation(fields: [storeId], references: [id])
+  items                  PurchaseOrderItem[]
+  grns                   GRN[]
+  createdByUser          User?               @relation("PurchaseOrderCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser          User?               @relation("PurchaseOrderUpdatedBy", fields: [updatedBy], references: [id])
+  approvedByUser          User?               @relation("PurchaseOrderApprovedBy", fields: [approvedBy], references: [id])
+  rejectedByUser         User?               @relation("PurchaseOrderRejectedBy", fields: [rejectedBy], references: [id])
+
+  @@map("purchase_orders")
+  @@index([orderNumber])
+  @@index([supplierId])
+  @@index([storeId])
+  @@index([status])
+  @@index([orderDate])
+  @@index([deliveryStatus])
+  @@index([requiresApproval])
+}
+
+// Purchase Order Item
+model PurchaseOrderItem {
+  id                String   @id @default(cuid())
+  purchaseOrderId  String
+  productId         String
+  
+  // Item Details
+  quantity          Int
+  unitPrice         Decimal  @db.Decimal(10, 2)
+  taxRate           Decimal? @db.Decimal(5, 2)
+  taxAmount         Decimal  @default(0) @db.Decimal(10, 2)
+  discount          Decimal  @default(0) @db.Decimal(10, 2)
+  totalPrice        Decimal  @db.Decimal(10, 2)
+  
+  // Received Quantities
+  quantityReceived  Int      @default(0)
+  quantityPending   Int      // quantity - quantityReceived
+  
+  // Notes
+  notes             String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  purchaseOrder     PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product           Product       @relation(fields: [productId], references: [id])
+  grnItems          GRNItem[]
+
+  @@map("purchase_order_items")
+  @@index([purchaseOrderId])
+  @@index([productId])
+}
+
+// GRN (Goods Receipt Note)
+model GRN {
+  id                String      @id @default(cuid())
+  grnNumber         String      @unique // e.g., "GRN-2025-001234"
+  purchaseOrderId   String
+  storeId           String
+  
+  // Status
+  status            GRNStatus   @default(PENDING)
+  receivedDate      DateTime    @default(now())
+  receivedBy        String?
+  
+  // Quality Check
+  qualityChecked    Boolean     @default(false)
+  qualityCheckedBy  String?
+  qualityCheckedAt  DateTime?
+  qualityNotes      String?
+  
+  // Metadata
+  notes             String?
+  invoiceNumber    String?
+  invoiceDate      DateTime?
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  createdBy         String?
+
+  // Relations
+  purchaseOrder     PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  store             Store         @relation(fields: [storeId], references: [id])
+  items             GRNItem[]
+  createdByUser     User?         @relation("GRNCreatedBy", fields: [createdBy], references: [id])
+  receivedByUser    User?         @relation("GRNReceivedBy", fields: [receivedBy], references: [id])
+  qualityCheckedByUser User?      @relation("GRNQualityCheckedBy", fields: [qualityCheckedBy], references: [id])
+
+  @@map("grns")
+  @@index([grnNumber])
+  @@index([purchaseOrderId])
+  @@index([storeId])
+  @@index([status])
+  @@index([receivedDate])
+}
+
+// GRN Item
+model GRNItem {
+  id                String   @id @default(cuid())
+  grnId             String
+  purchaseOrderItemId String
+  
+  // Received Details
+  quantityReceived  Int
+  quantityAccepted  Int      // After quality check
+  quantityRejected  Int      @default(0) // Rejected quantity
+  rejectionReason   String?
+  
+  // Cost
+  unitCost          Decimal? @db.Decimal(10, 2)
+  totalCost         Decimal? @db.Decimal(10, 2)
+  
+  // Notes
+  notes             String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  grn               GRN              @relation(fields: [grnId], references: [id], onDelete: Cascade)
+  purchaseOrderItem PurchaseOrderItem @relation(fields: [purchaseOrderItemId], references: [id])
+
+  @@map("grn_items")
+  @@index([grnId])
+  @@index([purchaseOrderItemId])
+}
+
 // --- store.model.prisma ---
 // ============================================
 // Store & Organization Models
@@ -841,6 +1488,7 @@ model Store {
   name            String
   storeType       StoreType
   status          StoreStatus @default(ACTIVE)
+  tenantId        String?     // Tenant/Brand the store belongs to
   countryId       String
   regionId        String
   parentStoreId   String?     // For multi-level store hierarchy
@@ -883,6 +1531,7 @@ model Store {
   updatedBy       String?
 
   // Relations
+  tenant          Tenant?     @relation("StoreTenant", fields: [tenantId], references: [id])
   country         Country     @relation(fields: [countryId], references: [id])
   region          Region      @relation(fields: [regionId], references: [id])
   parentStore     Store?      @relation("StoreHierarchy", fields: [parentStoreId], references: [id])
@@ -900,6 +1549,9 @@ model Store {
   auditLogs       AuditLog[]
   taxes           Tax[]
   defaultUsers    User[]      @relation("UserDefaultStore")
+  purchaseOrders PurchaseOrder[]
+  grns           GRN[]
+  kots           KOT[]
 
   createdByUser   User?       @relation("StoreCreatedBy", fields: [createdBy], references: [id])
   updatedByUser   User?       @relation("StoreUpdatedBy", fields: [updatedBy], references: [id])
@@ -908,6 +1560,7 @@ model Store {
   @@index([code])
   @@index([storeType])
   @@index([status])
+  @@index([tenantId])
   @@index([countryId])
   @@index([regionId])
   @@index([parentStoreId])
@@ -1047,6 +1700,101 @@ model AuditLog {
   @@index([createdAt])
 }
 
+// --- tenant.model.prisma ---
+// ============================================
+// Tenant (Brand) Management Models
+// ============================================
+
+// Tenant Model (Brand/Customer)
+model Tenant {
+  id                String            @id @default(cuid())
+  code              String            @unique // Tenant code (e.g., "TENANT001", "BRAND001")
+  name              String            // Brand/Tenant name
+  domain            String?           @unique // Domain/subdomain (e.g., "brand1.pos.com")
+  
+  // Status
+  status            TenantStatus      @default(ACTIVE)
+  
+  // Subscription
+  subscriptionPlan  SubscriptionPlan  @default(BASIC)
+  subscriptionStatus SubscriptionStatus @default(TRIAL)
+  maxUsers          Int               @default(10)
+  maxStores         Int               @default(5)
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  
+  // Address
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  country           String?
+  
+  // Contact
+  primaryContact    String?
+  email             String?           @unique
+  phone             String?
+  mobile            String?
+  
+  // Settings
+  currency          String            @default("USD")
+  timezone          String            @default("UTC")
+  language          String            @default("en")
+  dateFormat        String            @default("YYYY-MM-DD")
+  
+  // Features
+  features          Json?             // Feature flags (inventory, sales, purchases, reports, multiStore, apiAccess)
+  
+  // Metadata
+  notes             String?
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  createdBy         String?
+  updatedBy         String?
+
+  // Relations
+  stores            Store[]           @relation("StoreTenant")
+  users             User[]            @relation("UserTenant")
+  subscriptions     Subscription[]
+  bogoOffers        BOGOOffer[]
+  createdByUser     User?             @relation("TenantCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser     User?             @relation("TenantUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("tenants")
+  @@index([code])
+  @@index([domain])
+  @@index([status])
+  @@index([subscriptionStatus])
+  @@index([isActive])
+}
+
+// Subscription History
+model Subscription {
+  id                String            @id @default(cuid())
+  tenantId          String
+  plan              SubscriptionPlan
+  status            SubscriptionStatus
+  startDate         DateTime
+  endDate           DateTime?
+  amount            Decimal?           @db.Decimal(10, 2)
+  billingCycle      String?           // MONTHLY, YEARLY, etc.
+  autoRenew         Boolean           @default(false)
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  createdBy         String?
+
+  // Relations
+  tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdByUser     User?             @relation("SubscriptionCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("subscriptions")
+  @@index([tenantId])
+  @@index([status])
+  @@index([startDate])
+}
+
 // --- user.model.prisma ---
 // ============================================
 // User Management Models
@@ -1069,6 +1817,9 @@ model User {
   passwordResetAt   DateTime?
   profileImage      String?
   
+  // Multi-tenant support
+  tenantId          String?     // Tenant/Brand the user belongs to
+  
   // Multi-store support
   defaultStoreId    String?     // Default store for the user
   
@@ -1082,6 +1833,9 @@ model User {
   updatedUsers      User[]      @relation("UserUpdatedBy")
   createdByUser     User?       @relation("UserCreatedBy", fields: [createdBy], references: [id])
   updatedByUser     User?       @relation("UserUpdatedBy", fields: [updatedBy], references: [id])
+  
+  // Relations - Multi-tenant
+  tenant            Tenant?     @relation("UserTenant", fields: [tenantId], references: [id])
   
   // Relations - Multi-store
   defaultStore      Store?      @relation("UserDefaultStore", fields: [defaultStoreId], references: [id])
@@ -1098,6 +1852,7 @@ model User {
   // Relations - Permission Management
   groupPermissionsGranted GroupPermission[] @relation("GroupPermissionGrantedBy")
   userPermissionsGranted  UserPermission[]  @relation("UserPermissionGrantedBy")
+  rolePermissionsGranted  RolePermission[]   @relation("RolePermissionGrantedBy")
   userGroupsAssigned      UserGroup[]       @relation("UserGroupAssignedBy")
   userStoresAssigned      UserStore[]       @relation("UserStoreAssignedBy")
   
@@ -1131,12 +1886,39 @@ model User {
   
   // Relations - Audit
   auditLogs         AuditLog[]
+  
+  // Relations - Tenant Management
+  tenantsCreated    Tenant[]    @relation("TenantCreatedBy")
+  tenantsUpdated    Tenant[]    @relation("TenantUpdatedBy")
+  subscriptionsCreated Subscription[] @relation("SubscriptionCreatedBy")
+  
+  // Relations - Purchase Management
+  suppliersCreated  Supplier[]  @relation("SupplierCreatedBy")
+  suppliersUpdated  Supplier[]  @relation("SupplierUpdatedBy")
+  purchaseOrdersCreated PurchaseOrder[] @relation("PurchaseOrderCreatedBy")
+  purchaseOrdersUpdated PurchaseOrder[] @relation("PurchaseOrderUpdatedBy")
+  purchaseOrdersApproved PurchaseOrder[] @relation("PurchaseOrderApprovedBy")
+  purchaseOrdersRejected PurchaseOrder[] @relation("PurchaseOrderRejectedBy")
+  grnsCreated       GRN[]       @relation("GRNCreatedBy")
+  grnsReceived      GRN[]       @relation("GRNReceivedBy")
+  grnsQualityChecked GRN[]      @relation("GRNQualityCheckedBy")
+  
+  // Relations - Sales Management
+  ordersHeld        Order[]      @relation("OrderHeldBy")
+  ordersResumed    Order[]      @relation("OrderResumedBy")
+  kotsCreated       KOT[]       @relation("KOTCreatedBy")
+  tastingsCreated   Tasting[]   @relation("TastingCreatedBy")
+  bogoOffersCreated BOGOOffer[] @relation("BOGOCreatedBy")
+  bogoOffersUpdated BOGOOffer[] @relation("BOGOUpdatedBy")
+  bogoApplications  BOGOApplication[] @relation("BOGOAppliedBy")
+  vouchersRedeemed  BOGOVoucher[] @relation("VoucherRedeemedBy")
 
   @@map("users")
   @@index([email])
   @@index([username])
   @@index([role])
   @@index([status])
+  @@index([tenantId])
   @@index([defaultStoreId])
 }
 

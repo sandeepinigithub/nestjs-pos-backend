@@ -19,7 +19,7 @@ export class StoresController {
   constructor(private readonly storesService: StoresService) {}
 
   @Post()
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN)
   @ApiOperation({ summary: 'Create a new store' })
   @ApiResponse({ status: 201, description: 'Store created successfully', type: StoreResponseDto })
   async create(

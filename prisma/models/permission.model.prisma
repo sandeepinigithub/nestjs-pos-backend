@@ -39,7 +39,7 @@ model Permission {
   action      PermissionAction
   name        String  // e.g., "Create User", "View Sales Report"
   description String?
-  module      String? // e.g., "USER_MANAGEMENT", "REPORTS", "INVENTORY"
+  module      PermissionModule? // Module category
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -48,6 +48,7 @@ model Permission {
   groupPermissions GroupPermission[]
   userPermissions UserPermission[]
   accessPermissions AccessPermission[]
+  rolePermissions RolePermission[]
 
   @@unique([resource, action])
   @@map("permissions")
@@ -153,5 +154,27 @@ model UserGroup {
   @@index([userId])
   @@index([groupId])
   @@index([storeId])
+}
+
+// Role-Permission mapping (Direct role-based permissions)
+model RolePermission {
+  id            String   @id @default(cuid())
+  role          UserRole
+  permissionId  String
+  isAllowed     Boolean  @default(true)
+  conditions    Json?    // Additional conditions (e.g., store-specific, time-based)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  grantedBy     String?
+
+  // Relations
+  permission    Permission @relation(fields: [permissionId], references: [id])
+  grantedByUser User?      @relation("RolePermissionGrantedBy", fields: [grantedBy], references: [id])
+
+  @@unique([role, permissionId])
+  @@map("role_permissions")
+  @@index([role])
+  @@index([permissionId])
+  @@index([isAllowed])
 }
 

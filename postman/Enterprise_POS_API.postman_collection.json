@@ -1,0 +1,1162 @@
+{
+	"info": {
+		"_postman_id": "enterprise-pos-api-2026",
+		"name": "Enterprise POS API",
+		"description": "Complete API collection for Enterprise POS System with RBAC, Multi-tenant, Inventory, Purchases, Sales, and BOGO Offers",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login - Super Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set(\"access_token\", response.access_token);",
+									"    pm.environment.set(\"user_id\", response.user.id);",
+									"    pm.environment.set(\"user_role\", response.user.role);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"superadmin@pos.com\",\n  \"password\": \"Admin@123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "Login as Super Admin. Token will be automatically saved to environment."
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Tenant Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set(\"access_token\", response.access_token);",
+									"    pm.environment.set(\"user_id\", response.user.id);",
+									"    pm.environment.set(\"user_role\", response.user.role);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"tenantadmin@pos.com\",\n  \"password\": \"Admin@123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Store Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set(\"access_token\", response.access_token);",
+									"    pm.environment.set(\"user_id\", response.user.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"storeadmin@pos.com\",\n  \"password\": \"Admin@123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Cashier",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"cashier@pos.com\",\n  \"password\": \"Admin@123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints. Login to get JWT token."
+		},
+		{
+			"name": "Tenants",
+			"item": [
+				{
+					"name": "Create Tenant",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"code\": \"TENANT_002\",\n  \"name\": \"Acme Corporation\",\n  \"domain\": \"acme.pos.com\",\n  \"email\": \"contact@acme.com\",\n  \"phone\": \"+1234567890\",\n  \"subscriptionPlan\": \"PROFESSIONAL\",\n  \"maxUsers\": 50,\n  \"maxStores\": 10,\n  \"currency\": \"USD\",\n  \"timezone\": \"America/New_York\",\n  \"features\": {\n    \"inventory\": true,\n    \"sales\": true,\n    \"purchases\": true,\n    \"reports\": true,\n    \"multiStore\": true\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tenants",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tenants"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Tenants",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/tenants?page=1&limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tenants"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tenant by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/tenants/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tenants", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{tenant_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Tenant",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Tenant Name\",\n  \"status\": \"ACTIVE\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/tenants/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "tenants", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{tenant_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Tenant management endpoints"
+		},
+		{
+			"name": "Inventory",
+			"item": [
+				{
+					"name": "Get Inventory Dashboard",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/inventory/dashboard?storeId={{store_id}}&period=monthly",
+							"host": ["{{base_url}}"],
+							"path": ["api", "inventory", "dashboard"],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{store_id}}"
+								},
+								{
+									"key": "period",
+									"value": "monthly"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Inventory Value",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/inventory/value?storeId={{store_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "inventory", "value"],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{store_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Stock on Hand",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/inventory/stock-on-hand?storeId={{store_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "inventory", "stock-on-hand"],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{store_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Stock Alerts",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/inventory/alerts?storeId={{store_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "inventory", "alerts"],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{store_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Movement Analysis",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/inventory/movement-analysis?days=30&storeId={{store_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "inventory", "movement-analysis"],
+							"query": [
+								{
+									"key": "days",
+									"value": "30"
+								},
+								{
+									"key": "storeId",
+									"value": "{{store_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Inventory management endpoints"
+		},
+		{
+			"name": "Purchases",
+			"item": [
+				{
+					"name": "Get Purchase Dashboard",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/purchases/dashboard?storeId={{store_id}}&period=monthly",
+							"host": ["{{base_url}}"],
+							"path": ["api", "purchases", "dashboard"],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{store_id}}"
+								},
+								{
+									"key": "period",
+									"value": "monthly"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Purchase Summary",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/purchases/summary?storeId={{store_id}}&startDate=2025-01-01&endDate=2025-01-31",
+							"host": ["{{base_url}}"],
+							"path": ["api", "purchases", "summary"],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{store_id}}"
+								},
+								{
+									"key": "startDate",
+									"value": "2025-01-01"
+								},
+								{
+									"key": "endDate",
+									"value": "2025-01-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Open Purchase Orders",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/purchases/orders/open?storeId={{store_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "purchases", "orders", "open"],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{store_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Purchase management endpoints"
+		},
+		{
+			"name": "Sales",
+			"item": [
+				{
+					"name": "Get Sales Dashboard",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/sales/dashboard?storeId={{store_id}}&period=monthly",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sales", "dashboard"],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{store_id}}"
+								},
+								{
+									"key": "period",
+									"value": "monthly"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Sales Metrics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/sales/metrics?storeId={{store_id}}&startDate=2025-01-01&endDate=2025-01-31",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sales", "metrics"],
+							"query": [
+								{
+									"key": "storeId",
+									"value": "{{store_id}}"
+								},
+								{
+									"key": "startDate",
+									"value": "2025-01-01"
+								},
+								{
+									"key": "endDate",
+									"value": "2025-01-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Hold Order",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"reason\": \"Customer needs to check payment method\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/sales/orders/:orderId/hold",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sales", "orders", ":orderId", "hold"],
+							"variable": [
+								{
+									"key": "orderId",
+									"value": "{{order_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Resume Order",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/sales/orders/:orderId/resume",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sales", "orders", ":orderId", "resume"],
+							"variable": [
+								{
+									"key": "orderId",
+									"value": "{{order_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Process Payment",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"amount\": 100.00,\n  \"paymentMethod\": \"CASH\",\n  \"transactionId\": \"TXN-12345\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/sales/orders/:orderId/payments",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sales", "orders", ":orderId", "payments"],
+							"variable": [
+								{
+									"key": "orderId",
+									"value": "{{order_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create KOT",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tableNumber\": \"T-05\",\n  \"notes\": \"Extra spicy\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/sales/orders/:orderId/kot",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sales", "orders", ":orderId", "kot"],
+							"variable": [
+								{
+									"key": "orderId",
+									"value": "{{order_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Sales and POS operations endpoints"
+		},
+		{
+			"name": "BOGO Offers",
+			"item": [
+				{
+					"name": "Create BOGO Offer - Buy X Get X Same",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"code\": \"BOGO_COFFEE_001\",\n  \"name\": \"Buy 1 Coffee Get 1 Free\",\n  \"description\": \"Buy one coffee, get one free\",\n  \"type\": \"BUY_X_GET_X_SAME\",\n  \"status\": \"ACTIVE\",\n  \"triggerConfig\": {\n    \"productIds\": [\"{{product_id}}\"],\n    \"quantity\": 1\n  },\n  \"rewardConfig\": {\n    \"productIds\": [\"{{product_id}}\"],\n    \"quantity\": 1\n  },\n  \"maxFreeItems\": 2,\n  \"storeIds\": [\"{{store_id}}\"],\n  \"priority\": 10\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/bogo/offers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "bogo", "offers"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create BOGO Offer - Buy X Get Y Different",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"code\": \"BOGO_PIZZA_COKE\",\n  \"name\": \"Buy Pizza Get Coke Free\",\n  \"description\": \"Buy one pizza, get one coke free\",\n  \"type\": \"BUY_X_GET_Y_DIFFERENT\",\n  \"status\": \"ACTIVE\",\n  \"triggerConfig\": {\n    \"productIds\": [\"{{pizza_product_id}}\"],\n    \"quantity\": 1\n  },\n  \"rewardConfig\": {\n    \"productIds\": [\"{{coke_product_id}}\"],\n    \"quantity\": 1\n  },\n  \"storeIds\": [\"{{store_id}}\"],\n  \"priority\": 9\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/bogo/offers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "bogo", "offers"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create BOGO Offer - Time Based",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"code\": \"HAPPY_HOUR_COFFEE\",\n  \"name\": \"Happy Hour Coffee\",\n  \"description\": \"Buy 1 Coffee Get 1 Free (4 PM - 7 PM)\",\n  \"type\": \"TIME_BASED\",\n  \"status\": \"ACTIVE\",\n  \"triggerConfig\": {\n    \"productIds\": [\"{{product_id}}\"],\n    \"quantity\": 1\n  },\n  \"rewardConfig\": {\n    \"productIds\": [\"{{product_id}}\"],\n    \"quantity\": 1\n  },\n  \"timeRestrictions\": {\n    \"startTime\": \"16:00\",\n    \"endTime\": \"19:00\",\n    \"days\": [\"MON\", \"TUE\", \"WED\", \"THU\", \"FRI\"]\n  },\n  \"storeIds\": [\"{{store_id}}\"],\n  \"priority\": 8\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/bogo/offers",
+							"host": ["{{base_url}}"],
+							"path": ["api", "bogo", "offers"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All BOGO Offers",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/bogo/offers?page=1&limit=10&status=ACTIVE",
+							"host": ["{{base_url}}"],
+							"path": ["api", "bogo", "offers"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "status",
+									"value": "ACTIVE"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Eligible BOGO Offers",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/bogo/eligible?orderId={{order_id}}&customerId={{customer_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "bogo", "eligible"],
+							"query": [
+								{
+									"key": "orderId",
+									"value": "{{order_id}}"
+								},
+								{
+									"key": "customerId",
+									"value": "{{customer_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Apply BOGO Offer",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bogoOfferId\": \"{{bogo_offer_id}}\",\n  \"selectedProductIds\": []\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/bogo/apply?orderId={{order_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "bogo", "apply"],
+							"query": [
+								{
+									"key": "orderId",
+									"value": "{{order_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Redeem BOGO Voucher",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/bogo/vouchers/redeem?orderId={{order_id}}&voucherCode={{voucher_code}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "bogo", "vouchers", "redeem"],
+							"query": [
+								{
+									"key": "orderId",
+									"value": "{{order_id}}"
+								},
+								{
+									"key": "voucherCode",
+									"value": "{{voucher_code}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "BOGO Offers management and application endpoints"
+		},
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get All Users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users?page=1&limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/users/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "users", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "{{user_id}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "User management endpoints"
+		},
+		{
+			"name": "Stores",
+			"item": [
+				{
+					"name": "Get All Stores",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{access_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/stores?page=1&limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "stores"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Store management endpoints"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		}
+	]
+}

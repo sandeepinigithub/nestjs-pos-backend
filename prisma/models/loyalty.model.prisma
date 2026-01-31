@@ -35,6 +35,7 @@ model Customer {
   // Relations
   orders      Order[]
   loyaltyTransactions LoyaltyTransaction[]
+  bogoVouchers BOGOVoucher[]
 
   @@map("customers")
   @@index([customerNumber])

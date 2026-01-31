@@ -1,0 +1,93 @@
+// ============================================
+// Tenant (Brand) Management Models
+// ============================================
+
+// Tenant Model (Brand/Customer)
+model Tenant {
+  id                String            @id @default(cuid())
+  code              String            @unique // Tenant code (e.g., "TENANT001", "BRAND001")
+  name              String            // Brand/Tenant name
+  domain            String?           @unique // Domain/subdomain (e.g., "brand1.pos.com")
+  
+  // Status
+  status            TenantStatus      @default(ACTIVE)
+  
+  // Subscription
+  subscriptionPlan  SubscriptionPlan  @default(BASIC)
+  subscriptionStatus SubscriptionStatus @default(TRIAL)
+  maxUsers          Int               @default(10)
+  maxStores         Int               @default(5)
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  
+  // Address
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  country           String?
+  
+  // Contact
+  primaryContact    String?
+  email             String?           @unique
+  phone             String?
+  mobile            String?
+  
+  // Settings
+  currency          String            @default("USD")
+  timezone          String            @default("UTC")
+  language          String            @default("en")
+  dateFormat        String            @default("YYYY-MM-DD")
+  
+  // Features
+  features          Json?             // Feature flags (inventory, sales, purchases, reports, multiStore, apiAccess)
+  
+  // Metadata
+  notes             String?
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  createdBy         String?
+  updatedBy         String?
+
+  // Relations
+  stores            Store[]           @relation("StoreTenant")
+  users             User[]            @relation("UserTenant")
+  subscriptions     Subscription[]
+  bogoOffers        BOGOOffer[]
+  createdByUser     User?             @relation("TenantCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser     User?             @relation("TenantUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("tenants")
+  @@index([code])
+  @@index([domain])
+  @@index([status])
+  @@index([subscriptionStatus])
+  @@index([isActive])
+}
+
+// Subscription History
+model Subscription {
+  id                String            @id @default(cuid())
+  tenantId          String
+  plan              SubscriptionPlan
+  status            SubscriptionStatus
+  startDate         DateTime
+  endDate           DateTime?
+  amount            Decimal?           @db.Decimal(10, 2)
+  billingCycle      String?           // MONTHLY, YEARLY, etc.
+  autoRenew         Boolean           @default(false)
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  createdBy         String?
+
+  // Relations
+  tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdByUser     User?             @relation("SubscriptionCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("subscriptions")
+  @@index([tenantId])
+  @@index([status])
+  @@index([startDate])
+}

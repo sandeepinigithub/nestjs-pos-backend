@@ -54,7 +54,7 @@ export class PermissionRepository {
 
   async findByModule(module: string): Promise<Permission[]> {
     return this.prisma.permission.findMany({
-      where: { module },
+      where: { module: module as any },
     });
   }
 

@@ -17,6 +17,10 @@ import { AuditModule } from './audit/audit.module';
 import { SyncModule } from './sync/sync.module';
 import { HealthModule } from './health/health.module';
 import { CommonModule } from './common/common.module';
+import { TenantsModule } from './tenants/tenants.module';
+import { PurchasesModule } from './purchases/purchases.module';
+import { SalesModule } from './sales/sales.module';
+import { BOGOModule } from './bogo/bogo.module';
 
 @Module({
   imports: [
@@ -27,11 +31,15 @@ import { CommonModule } from './common/common.module';
     UsersModule,
     GroupsModule,
     PermissionsModule,
+    TenantsModule,
     StoresModule,
     ProductsModule,
     CategoriesModule,
     OrdersModule,
     InventoryModule,
+    PurchasesModule,
+    SalesModule,
+    BOGOModule,
     LoyaltyModule,
     AuditModule,
     SyncModule,

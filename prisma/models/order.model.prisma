@@ -28,6 +28,14 @@ model Order {
   paymentStatus   PaymentStatus @default(PENDING)
   paymentMethod   PaymentMethod?
   
+  // Order Hold/Resume
+  isHeld          Boolean     @default(false)
+  heldAt          DateTime?
+  heldBy          String?
+  heldReason      String?
+  resumedAt       DateTime?
+  resumedBy       String?
+  
   // Metadata
   notes           String?
   orderDate       DateTime    @default(now())
@@ -50,6 +58,13 @@ model Order {
   createdByUser   User?       @relation("OrderCreatedBy", fields: [createdBy], references: [id])
   updatedByUser   User?       @relation("OrderUpdatedBy", fields: [updatedBy], references: [id])
   cancelledByUser User?      @relation("OrderCancelledBy", fields: [cancelledBy], references: [id])
+  heldByUser      User?       @relation("OrderHeldBy", fields: [heldBy], references: [id])
+  resumedByUser   User?       @relation("OrderResumedBy", fields: [resumedBy], references: [id])
+  kots            KOT[]
+  tastings        Tasting[]
+  bogoApplications BOGOApplication[]
+  vouchersGenerated BOGOVoucher[] @relation("VoucherGeneratedFrom")
+  vouchersRedeemed BOGOVoucher[] @relation("VoucherRedeemedIn")
 
   @@map("orders")
   @@index([orderNumber])
@@ -58,6 +73,67 @@ model Order {
   @@index([status])
   @@index([orderDate])
   @@index([paymentStatus])
+  @@index([isHeld])
+}
+
+// KOT (Kitchen Order Ticket)
+model KOT {
+  id                String   @id @default(cuid())
+  kotNumber         String   @unique // e.g., "KOT-2025-001234"
+  orderId           String
+  storeId           String
+  
+  // KOT Details
+  status            String   @default("PENDING") // PENDING, SENT, PREPARING, READY, COMPLETED
+  items             Json     // Array of order items for kitchen
+  tableNumber       String?
+  notes             String?
+  
+  // Timing
+  sentAt            DateTime @default(now())
+  completedAt       DateTime?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdBy         String?
+
+  // Relations
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  store             Store    @relation(fields: [storeId], references: [id])
+  createdByUser     User?    @relation("KOTCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("kots")
+  @@index([kotNumber])
+  @@index([orderId])
+  @@index([storeId])
+  @@index([status])
+  @@index([sentAt])
+}
+
+// Tasting Tracking
+model Tasting {
+  id                String   @id @default(cuid())
+  orderId           String
+  productId         String
+  
+  // Tasting Details
+  quantity          Int      @default(1)
+  tastingType       String   @default("SAMPLE") // SAMPLE, COMPLIMENTARY, PROMOTIONAL
+  customerFeedback  String?  // Customer feedback on tasting
+  notes             String?
+  
+  createdAt         DateTime @default(now())
+  createdBy         String?
+
+  // Relations
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product           Product  @relation(fields: [productId], references: [id])
+  createdByUser     User?    @relation("TastingCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("tastings")
+  @@index([orderId])
+  @@index([productId])
+  @@index([createdAt])
 }
 
 // Order Item

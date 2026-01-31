@@ -16,7 +16,7 @@ export class SyncController {
   constructor(private readonly syncService: SyncService) {}
 
   @Post('initiate')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN)
   @ApiOperation({ summary: 'Initiate a sync operation' })
   @ApiResponse({ status: 201, description: 'Sync initiated successfully' })
   async initiateSync(
@@ -31,7 +31,7 @@ export class SyncController {
   }
 
   @Get()
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN)
   @ApiOperation({ summary: 'Get sync logs with pagination' })
   @ApiQuery({ name: 'storeId', required: false })
   @ApiQuery({ name: 'regionId', required: false })
@@ -51,7 +51,7 @@ export class SyncController {
   }
 
   @Get('store/:storeId')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN)
   @ApiOperation({ summary: 'Get sync logs by store' })
   @ApiResponse({
     status: 200,

@@ -55,6 +55,8 @@ model Product {
   productStores   ProductStore[]
   orderItems      OrderItem[]
   inventory       Inventory[]
+  purchaseOrderItems PurchaseOrderItem[]
+  tastings        Tasting[]
   createdByUser   User?    @relation("ProductCreatedBy", fields: [createdBy], references: [id])
   updatedByUser   User?    @relation("ProductUpdatedBy", fields: [updatedBy], references: [id])
 

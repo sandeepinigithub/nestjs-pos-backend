@@ -28,7 +28,7 @@ export class PermissionsService {
       action: createPermissionDto.action,
       name: createPermissionDto.name,
       description: createPermissionDto.description,
-      module: createPermissionDto.module,
+      module: createPermissionDto.module as any,
       isActive: createPermissionDto.isActive ?? true,
     });
 

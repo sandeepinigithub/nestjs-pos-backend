@@ -13,6 +13,7 @@ export class UserResponseDto {
   emailVerifiedAt?: Date;
   lastLoginAt?: Date;
   profileImage?: string;
+  tenantId?: string;
   createdAt: Date;
   updatedAt: Date;
 
@@ -29,6 +30,7 @@ export class UserResponseDto {
     this.emailVerifiedAt = user.emailVerifiedAt;
     this.lastLoginAt = user.lastLoginAt;
     this.profileImage = user.profileImage;
+    this.tenantId = user.tenantId;
     this.createdAt = user.createdAt;
     this.updatedAt = user.updatedAt;
   }

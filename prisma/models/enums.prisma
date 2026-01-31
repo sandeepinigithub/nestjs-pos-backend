@@ -3,11 +3,20 @@
 // ============================================
 
 enum UserRole {
-  SUPER_ADMIN
-  ADMIN
-  MANAGER
-  CASHIER
-  USER
+  // Platform Level
+  SUPER_ADMIN          // Platform Admin - manages all tenants
+  TENANT_ADMIN         // Tenant Admin (Brand) - manages tenant stores and users
+  STORE_ADMIN          // Store Admin (CompanyOwned or FranchiseOwned)
+  STORE_MANAGER        // Store Manager - manages store operations
+  CASHIER              // Cashier - handles POS sales and billing
+  KITCHEN_STAFF        // Kitchen Staff (KDS) - manages kitchen orders
+  INVENTORY_MANAGER    // Inventory Manager - manages inventory
+  PURCHASE_MANAGER     // Purchase Manager - manages purchases
+  ACCOUNTANT           // Accountant - financial view access
+  SUPPORT_STAFF        // Support Staff - view access
+  SYSTEM_AUDITOR       // System Auditor - compliance and logs access
+  HR_MANAGER           // HR Manager - user management view
+  USER                 // Generic user (legacy)
 }
 
 enum UserStatus {
@@ -19,8 +28,48 @@ enum UserStatus {
 
 enum StoreType {
   COMPANY_OWNED
+  FRANCHISE_OWNED
   LICENSED
   JOINT_VENTURE
+}
+
+enum TenantStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  TRIAL
+  EXPIRED
+}
+
+enum SubscriptionPlan {
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+  CUSTOM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  EXPIRED
+  TRIAL
+}
+
+enum PermissionModule {
+  DASHBOARD
+  INVENTORY
+  SALES
+  PURCHASES
+  REPORTS
+  USER_MANAGEMENT
+  ADMINISTRATION
+  POS_SALE
+  KITCHEN_DISPLAY_SYSTEM
+  STORE_MANAGEMENT
+  PRODUCT_MANAGEMENT
+  ORDER_MANAGEMENT
+  SYSTEM
 }
 
 enum StoreStatus {
@@ -171,4 +220,30 @@ enum TaxType {
   SALES_TAX
   SERVICE_TAX
   CUSTOM
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  ORDERED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
+  REJECTED
+}
+
+enum GRNStatus {
+  PENDING
+  PARTIAL
+  COMPLETED
+  CANCELLED
+}
+
+enum DeliveryStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  DELAYED
+  CANCELLED
 }

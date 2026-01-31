@@ -19,14 +19,14 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:merge": "ts-node scripts/merge-prisma-schema.ts",
-    "prisma:generate": "npm run prisma:merge && prisma generate",
-    "prisma:migrate": "npm run prisma:merge && prisma migrate dev",
-    "prisma:migrate:deploy": "npm run prisma:merge && prisma migrate deploy",
-    "prisma:studio": "npm run prisma:merge && prisma studio",
+    "prisma:generate": "npm run prisma:merge && npm exec prisma generate",
+    "prisma:migrate": "npm run prisma:merge && npm exec prisma migrate dev",
+    "prisma:migrate:deploy": "npm run prisma:merge && npm exec prisma migrate deploy",
+    "prisma:studio": "npm run prisma:merge && npm exec prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "prisma:format": "npm run prisma:merge && prisma format",
-    "prisma:validate": "npm run prisma:merge && prisma validate",
-    "prisma:reset": "npm run prisma:merge && prisma migrate reset"
+    "prisma:format": "npm run prisma:merge && npm exec prisma format",
+    "prisma:validate": "npm run prisma:merge && npm exec prisma validate",
+    "prisma:reset": "npm run prisma:merge && npm exec prisma migrate reset"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.8",

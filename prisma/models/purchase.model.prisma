@@ -1,0 +1,220 @@
+// ============================================
+// Purchase Management Models
+// ============================================
+// Note: PurchaseOrderStatus, GRNStatus, and DeliveryStatus enums are defined in enums.prisma
+
+// Supplier/Vendor Model
+model Supplier {
+  id                String   @id @default(cuid())
+  code              String   @unique // Supplier code (e.g., "SUP001")
+  name              String
+  contactPerson     String?
+  email             String?
+  phone             String?
+  mobile            String?
+  
+  // Address
+  address           String?
+  city              String?
+  state             String?
+  postalCode        String?
+  country           String?
+  
+  // Tax Information
+  taxId             String?  // Tax ID/GST Number
+  taxType           String?  // GST, VAT, etc.
+  
+  // Payment Terms
+  paymentTerms      String?  // e.g., "Net 30", "COD"
+  creditLimit       Decimal?  @db.Decimal(10, 2)
+  
+  // Status
+  isActive          Boolean  @default(true)
+  rating            Int?     // Supplier rating (1-5)
+  notes             String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  createdBy         String?
+  updatedBy         String?
+
+  // Relations
+  purchaseOrders    PurchaseOrder[]
+  createdByUser     User?    @relation("SupplierCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser     User?    @relation("SupplierUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("suppliers")
+  @@index([code])
+  @@index([name])
+  @@index([isActive])
+}
+
+// Purchase Order Model
+model PurchaseOrder {
+  id                    String              @id @default(cuid())
+  orderNumber            String              @unique // e.g., "PO-2025-001234"
+  supplierId             String
+  storeId                String
+  
+  // Order Details
+  status                 PurchaseOrderStatus @default(DRAFT)
+  orderDate              DateTime            @default(now())
+  expectedDeliveryDate   DateTime?
+  actualDeliveryDate     DateTime?
+  
+  // Pricing
+  subtotal               Decimal             @db.Decimal(10, 2)
+  taxAmount              Decimal             @default(0) @db.Decimal(10, 2)
+  discountAmount         Decimal             @default(0) @db.Decimal(10, 2)
+  totalAmount            Decimal             @db.Decimal(10, 2)
+  
+  // Delivery
+  deliveryStatus         DeliveryStatus      @default(PENDING)
+  deliveryAddress        String?
+  trackingNumber         String?
+  
+  // Approval
+  requiresApproval       Boolean             @default(false)
+  approvedBy             String?
+  approvedAt             DateTime?
+  rejectedBy             String?
+  rejectedAt             DateTime?
+  rejectionReason        String?
+  
+  // Metadata
+  notes                  String?
+  reference              String?            // External reference
+  currency               String              @default("USD")
+  
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  createdBy              String?
+  updatedBy              String?
+
+  // Relations
+  supplier               Supplier            @relation(fields: [supplierId], references: [id])
+  store                  Store               @relation(fields: [storeId], references: [id])
+  items                  PurchaseOrderItem[]
+  grns                   GRN[]
+  createdByUser          User?               @relation("PurchaseOrderCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser          User?               @relation("PurchaseOrderUpdatedBy", fields: [updatedBy], references: [id])
+  approvedByUser          User?               @relation("PurchaseOrderApprovedBy", fields: [approvedBy], references: [id])
+  rejectedByUser         User?               @relation("PurchaseOrderRejectedBy", fields: [rejectedBy], references: [id])
+
+  @@map("purchase_orders")
+  @@index([orderNumber])
+  @@index([supplierId])
+  @@index([storeId])
+  @@index([status])
+  @@index([orderDate])
+  @@index([deliveryStatus])
+  @@index([requiresApproval])
+}
+
+// Purchase Order Item
+model PurchaseOrderItem {
+  id                String   @id @default(cuid())
+  purchaseOrderId  String
+  productId         String
+  
+  // Item Details
+  quantity          Int
+  unitPrice         Decimal  @db.Decimal(10, 2)
+  taxRate           Decimal? @db.Decimal(5, 2)
+  taxAmount         Decimal  @default(0) @db.Decimal(10, 2)
+  discount          Decimal  @default(0) @db.Decimal(10, 2)
+  totalPrice        Decimal  @db.Decimal(10, 2)
+  
+  // Received Quantities
+  quantityReceived  Int      @default(0)
+  quantityPending   Int      // quantity - quantityReceived
+  
+  // Notes
+  notes             String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  purchaseOrder     PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product           Product       @relation(fields: [productId], references: [id])
+  grnItems          GRNItem[]
+
+  @@map("purchase_order_items")
+  @@index([purchaseOrderId])
+  @@index([productId])
+}
+
+// GRN (Goods Receipt Note)
+model GRN {
+  id                String      @id @default(cuid())
+  grnNumber         String      @unique // e.g., "GRN-2025-001234"
+  purchaseOrderId   String
+  storeId           String
+  
+  // Status
+  status            GRNStatus   @default(PENDING)
+  receivedDate      DateTime    @default(now())
+  receivedBy        String?
+  
+  // Quality Check
+  qualityChecked    Boolean     @default(false)
+  qualityCheckedBy  String?
+  qualityCheckedAt  DateTime?
+  qualityNotes      String?
+  
+  // Metadata
+  notes             String?
+  invoiceNumber    String?
+  invoiceDate      DateTime?
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  createdBy         String?
+
+  // Relations
+  purchaseOrder     PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  store             Store         @relation(fields: [storeId], references: [id])
+  items             GRNItem[]
+  createdByUser     User?         @relation("GRNCreatedBy", fields: [createdBy], references: [id])
+  receivedByUser    User?         @relation("GRNReceivedBy", fields: [receivedBy], references: [id])
+  qualityCheckedByUser User?      @relation("GRNQualityCheckedBy", fields: [qualityCheckedBy], references: [id])
+
+  @@map("grns")
+  @@index([grnNumber])
+  @@index([purchaseOrderId])
+  @@index([storeId])
+  @@index([status])
+  @@index([receivedDate])
+}
+
+// GRN Item
+model GRNItem {
+  id                String   @id @default(cuid())
+  grnId             String
+  purchaseOrderItemId String
+  
+  // Received Details
+  quantityReceived  Int
+  quantityAccepted  Int      // After quality check
+  quantityRejected  Int      @default(0) // Rejected quantity
+  rejectionReason   String?
+  
+  // Cost
+  unitCost          Decimal? @db.Decimal(10, 2)
+  totalCost         Decimal? @db.Decimal(10, 2)
+  
+  // Notes
+  notes             String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  grn               GRN              @relation(fields: [grnId], references: [id], onDelete: Cascade)
+  purchaseOrderItem PurchaseOrderItem @relation(fields: [purchaseOrderItemId], references: [id])
+
+  @@map("grn_items")
+  @@index([grnId])
+  @@index([purchaseOrderItemId])
+}

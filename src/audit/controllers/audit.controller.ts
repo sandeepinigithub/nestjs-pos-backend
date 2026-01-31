@@ -15,7 +15,7 @@ export class AuditController {
   constructor(private readonly auditService: AuditService) {}
 
   @Get()
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN, UserRole.SYSTEM_AUDITOR)
   @ApiOperation({ summary: 'Get audit logs with pagination' })
   @ApiQuery({ name: 'userId', required: false })
   @ApiQuery({ name: 'storeId', required: false })
@@ -37,7 +37,7 @@ export class AuditController {
   }
 
   @Get('user/:userId')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN, UserRole.SYSTEM_AUDITOR)
   @ApiOperation({ summary: 'Get audit logs by user' })
   @ApiResponse({
     status: 200,
@@ -52,7 +52,7 @@ export class AuditController {
   }
 
   @Get('resource/:resource/:resourceId')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN, UserRole.SYSTEM_AUDITOR)
   @ApiOperation({ summary: 'Get audit logs for a specific resource' })
   @ApiResponse({ status: 200, description: 'Audit logs retrieved', type: Array })
   async findByResource(

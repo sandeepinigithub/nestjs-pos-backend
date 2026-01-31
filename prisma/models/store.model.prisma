@@ -53,6 +53,7 @@ model Store {
   name            String
   storeType       StoreType
   status          StoreStatus @default(ACTIVE)
+  tenantId        String?     // Tenant/Brand the store belongs to
   countryId       String
   regionId        String
   parentStoreId   String?     // For multi-level store hierarchy
@@ -95,6 +96,7 @@ model Store {
   updatedBy       String?
 
   // Relations
+  tenant          Tenant?     @relation("StoreTenant", fields: [tenantId], references: [id])
   country         Country     @relation(fields: [countryId], references: [id])
   region          Region      @relation(fields: [regionId], references: [id])
   parentStore     Store?      @relation("StoreHierarchy", fields: [parentStoreId], references: [id])
@@ -112,6 +114,9 @@ model Store {
   auditLogs       AuditLog[]
   taxes           Tax[]
   defaultUsers    User[]      @relation("UserDefaultStore")
+  purchaseOrders PurchaseOrder[]
+  grns           GRN[]
+  kots           KOT[]
 
   createdByUser   User?       @relation("StoreCreatedBy", fields: [createdBy], references: [id])
   updatedByUser   User?       @relation("StoreUpdatedBy", fields: [updatedBy], references: [id])
@@ -120,6 +125,7 @@ model Store {
   @@index([code])
   @@index([storeType])
   @@index([status])
+  @@index([tenantId])
   @@index([countryId])
   @@index([regionId])
   @@index([parentStoreId])

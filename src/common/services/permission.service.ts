@@ -13,7 +13,7 @@ export class PermissionService {
    */
   canCreateUser(currentUser?: UserResponseDto): boolean {
     if (!currentUser) return false;
-    return currentUser.role === UserRole.SUPER_ADMIN || currentUser.role === UserRole.ADMIN;
+    return currentUser.role === UserRole.SUPER_ADMIN || currentUser.role === UserRole.TENANT_ADMIN;
   }
 
   /**
@@ -21,7 +21,7 @@ export class PermissionService {
    */
   canViewAllUsers(currentUser?: UserResponseDto): boolean {
     if (!currentUser) return false;
-    return currentUser.role === UserRole.SUPER_ADMIN || currentUser.role === UserRole.ADMIN;
+    return currentUser.role === UserRole.SUPER_ADMIN || currentUser.role === UserRole.TENANT_ADMIN;
   }
 
   /**
@@ -89,7 +89,7 @@ export class PermissionService {
    */
   isAdmin(currentUser?: UserResponseDto): boolean {
     if (!currentUser) return false;
-    return currentUser.role === UserRole.SUPER_ADMIN || currentUser.role === UserRole.ADMIN;
+    return currentUser.role === UserRole.SUPER_ADMIN || currentUser.role === UserRole.TENANT_ADMIN;
   }
 }
 

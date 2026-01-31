@@ -30,7 +30,7 @@ export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
 
   @Post()
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN)
   @ApiOperation({ summary: 'Create a new group' })
   @ApiResponse({ status: 201, description: 'Group created successfully', type: GroupResponseDto })
   @ApiResponse({ status: 409, description: 'Group code already exists' })
@@ -71,7 +71,7 @@ export class GroupsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN)
   @ApiOperation({ summary: 'Update a group' })
   @ApiResponse({ status: 200, description: 'Group updated successfully', type: GroupResponseDto })
   @ApiResponse({ status: 404, description: 'Group not found' })
@@ -84,7 +84,7 @@ export class GroupsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a group' })
   @ApiResponse({ status: 204, description: 'Group deleted successfully' })

@@ -1,0 +1,246 @@
+// ============================================
+// BOGO (Buy One Get One) Offers Models
+// ============================================
+
+enum BOGOType {
+  BUY_X_GET_X_SAME           // Case 1: Buy X → Get X (Same Item Free)
+  BUY_X_GET_Y_DIFFERENT      // Case 2: Buy X → Get Y (Different Item Free)
+  BUY_X_GET_Y_PERCENT_OFF    // Case 3: Buy X → Get % Off on Y
+  BUY_COMBO_GET_FREE         // Case 4: Buy Combo → Get Free Item
+  BUY_X_GET_Y_FLAT_PRICE     // Case 5: Buy X → Get Y at Flat Price
+  REPEATABLE_MULTI_CYCLE     // Case 6: Repeatable BOGO (Multi-Cycle)
+  LIMIT_BASED                // Case 7: Limit-Based BOGO
+  MIX_MATCH_GROUP            // Case 8: Mix & Match BOGO (Group Items)
+  CATEGORY_BASED             // Case 9: Category-Based BOGO
+  BILL_AMOUNT_FREE_ITEM      // Case 10: Bill Amount → Free Item
+  BILL_AMOUNT_DISCOUNT       // Case 11: Bill Amount → Discount on Item
+  TIME_BASED                 // Case 12: Time-Based Offer
+  CHANNEL_BASED              // Case 13: Channel-Based Offer
+  CUSTOMER_TYPE_BASED        // Case 14: Customer-Type Based Offer
+  MANUAL_CASHIER             // Case 15: Manual BOGO (Cashier Applied)
+  FALLBACK_ITEM              // Case 16: Fallback Item BOGO
+  COUPON_CODE                // Case 17: Coupon Code Based BOGO
+  SLAB_BASED                 // Case 18: Slab-Based BOGO (Tiered Quantities)
+  CUSTOMER_CHOICE            // Case 19: Buy X → Customer Chooses Free Item
+  PROGRESSIVE_DISCOUNT       // Case 20: Progressive Discount BOGO
+  TIERED_MULTI_LEVEL         // Case 21: Tiered BOGO (Multi-Level Rewards)
+  MAX_PRICE_RULE             // Case 22: BOGO with Maximum Price Rule
+  LOCATION_SPECIFIC          // Case 23: Location-Specific BOGO
+  QTY_BILL_CONDITION         // Case 24: BOGO with Qty + Bill Amount Condition
+  NEXT_VISIT_VOUCHER         // Case 25: Next-Visit BOGO (Voucher Based)
+}
+
+enum BOGOStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  SCHEDULED
+}
+
+enum BOGOTriggerType {
+  PRODUCT
+  CATEGORY
+  COMBO
+  BILL_AMOUNT
+  CUSTOMER_TYPE
+  MANUAL
+  COUPON
+}
+
+enum BOGORewardType {
+  FREE_ITEM
+  PERCENTAGE_DISCOUNT
+  FLAT_DISCOUNT
+  FLAT_PRICE
+  CUSTOMER_CHOICE
+}
+
+enum CustomerType {
+  NEW
+  RETURNING
+  LOYALTY
+  ALL
+}
+
+enum OrderChannel {
+  DINE_IN
+  TAKEAWAY
+  DELIVERY
+  ONLINE
+  ALL
+}
+
+// BOGO Offer Model
+model BOGOOffer {
+  id                String      @id @default(cuid())
+  code              String      @unique // Offer code (e.g., "BOGO001", "COFFEE50")
+  name              String      // Offer name
+  description       String?
+  type              BOGOType
+  
+  // Status
+  status            BOGOStatus @default(ACTIVE)
+  
+  // Trigger Configuration (JSON for flexibility)
+  triggerConfig     Json        // Trigger conditions based on type
+  // Examples:
+  // - Product-based: { productIds: ["id1", "id2"], quantity: 1 }
+  // - Category-based: { categoryIds: ["cat1"], quantity: 1 }
+  // - Combo: { comboItems: [{productId: "id1", quantity: 1}, {productId: "id2", quantity: 1}] }
+  // - Bill amount: { minBillAmount: 500 }
+  // - Customer type: { customerTypes: ["NEW", "RETURNING"] }
+  
+  // Reward Configuration (JSON for flexibility)
+  rewardConfig      Json        // Reward details based on type
+  // Examples:
+  // - Free item: { productId: "id2", quantity: 1, maxPrice: 80 }
+  // - Percentage discount: { productId: "id2", discountPercent: 50 }
+  // - Flat price: { productId: "id2", flatPrice: 20 }
+  // - Customer choice: { productIds: ["id1", "id2", "id3"], quantity: 1 }
+  // - Slab-based: { slabs: [{buyQty: 2, getQty: 1}, {buyQty: 4, getQty: 2}] }
+  
+  // Conditions
+  minBillAmount     Decimal?    @db.Decimal(10, 2) // Minimum bill amount (for cases 10, 11, 24)
+  maxFreeItems      Int?        // Maximum free items per order (Case 7)
+  maxUsagePerOrder  Int?        // Maximum times offer can be used per order
+  maxUsagePerCustomer Int?     // Maximum times offer can be used per customer
+  maxUsageTotal     Int?        // Maximum total usage across all customers
+  
+  // Time Restrictions
+  validFrom         DateTime?
+  validTo           DateTime?
+  timeRestrictions  Json?       // { startTime: "14:00", endTime: "19:00", days: ["MON", "TUE"] }
+  
+  // Channel Restrictions
+  orderChannels     OrderChannel[] // Case 13: Channel-Based Offer
+  
+  // Customer Type Restrictions
+  customerTypes     CustomerType[] // Case 14: Customer-Type Based Offer
+  
+  // Location Restrictions
+  storeIds          String[]    // Case 23: Location-Specific BOGO
+  tenantId          String?     // Tenant-specific offer
+  
+  // Fallback Configuration (Case 16)
+  fallbackConfig    Json?       // { fallbackProductIds: ["id1", "id2"] }
+  
+  // Progressive/Tiered Configuration (Cases 18, 20, 21)
+  tierConfig        Json?       // Tiered rewards configuration
+  
+  // Repeatable Configuration (Case 6)
+  repeatable        Boolean     @default(false)
+  repeatCycle       Int?        // How many times it repeats (e.g., Buy 2 Get 1 = cycle of 3)
+  
+  // Coupon Code (Case 17)
+  couponCode        String?     @unique
+  requiresCoupon    Boolean     @default(false)
+  
+  // Manual Application (Case 15)
+  allowManual       Boolean     @default(false) // Can cashier manually apply
+  
+  // Priority (for multiple applicable offers)
+  priority          Int         @default(0) // Higher priority = applied first
+  
+  // Metadata
+  isActive          Boolean     @default(true)
+  usageCount        Int         @default(0) // Total times used
+  notes             String?
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  createdBy         String?
+  updatedBy         String?
+
+  // Relations
+  tenant            Tenant?     @relation(fields: [tenantId], references: [id])
+  applications     BOGOApplication[]
+  vouchers          BOGOVoucher[]
+  createdByUser     User?       @relation("BOGOCreatedBy", fields: [createdBy], references: [id])
+  updatedByUser     User?       @relation("BOGOUpdatedBy", fields: [updatedBy], references: [id])
+
+  @@map("bogo_offers")
+  @@index([code])
+  @@index([couponCode])
+  @@index([status])
+  @@index([type])
+  @@index([tenantId])
+  @@index([isActive])
+  @@index([validFrom])
+  @@index([validTo])
+}
+
+// BOGO Application (when offer is applied to an order)
+model BOGOApplication {
+  id                String      @id @default(cuid())
+  bogoOfferId       String
+  orderId           String
+  
+  // Application Details
+  appliedAt         DateTime    @default(now())
+  appliedBy         String?
+  discountAmount    Decimal     @db.Decimal(10, 2) // Total discount applied
+  freeItemsCount    Int         @default(0)
+  
+  // Application Details (JSON for flexibility)
+  applicationDetails Json?       // Details of what was applied
+  // Example: { triggerItems: [{itemId: "x", quantity: 1}], rewardItems: [{productId: "y", quantity: 1, discount: 0}] }
+  
+  // Manual Application Flag
+  isManual          Boolean     @default(false)
+  
+  // Coupon Used
+  couponCode        String?
+  
+  createdAt         DateTime    @default(now())
+
+  // Relations
+  bogoOffer         BOGOOffer   @relation(fields: [bogoOfferId], references: [id])
+  order             Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  appliedByUser     User?       @relation("BOGOAppliedBy", fields: [appliedBy], references: [id])
+
+  @@map("bogo_applications")
+  @@index([bogoOfferId])
+  @@index([orderId])
+  @@index([appliedAt])
+  @@index([couponCode])
+}
+
+// BOGO Voucher (for Next-Visit BOGO - Case 25)
+model BOGOVoucher {
+  id                String      @id @default(cuid())
+  voucherCode       String      @unique // Voucher code/QR code
+  bogoOfferId       String
+  orderId           String      // Order that generated this voucher
+  customerId        String?     // Customer who earned the voucher
+  
+  // Voucher Details
+  status            String      @default("PENDING") // PENDING, REDEEMED, EXPIRED
+  validFrom         DateTime    @default(now())
+  validTo           DateTime?
+  
+  // Reward Details
+  rewardConfig      Json        // What the voucher entitles to
+  
+  // Usage
+  redeemedAt        DateTime?
+  redeemedOrderId   String?     // Order where voucher was redeemed
+  redeemedBy        String?
+  
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  bogoOffer         BOGOOffer   @relation(fields: [bogoOfferId], references: [id])
+  order             Order       @relation("VoucherGeneratedFrom", fields: [orderId], references: [id])
+  customer          Customer?   @relation(fields: [customerId], references: [id])
+  redeemedOrder     Order?      @relation("VoucherRedeemedIn", fields: [redeemedOrderId], references: [id])
+  redeemedByUser    User?       @relation("VoucherRedeemedBy", fields: [redeemedBy], references: [id])
+
+  @@map("bogo_vouchers")
+  @@index([voucherCode])
+  @@index([bogoOfferId])
+  @@index([orderId])
+  @@index([customerId])
+  @@index([status])
+  @@index([validTo])
+}
