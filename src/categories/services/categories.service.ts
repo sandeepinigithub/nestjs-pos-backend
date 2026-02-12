@@ -13,13 +13,13 @@ export class CategoriesService {
   constructor(private categoryRepository: CategoryRepository) {}
 
   async create(createCategoryDto: CreateCategoryDto): Promise<CategoryResponseDto> {
-    // Check if code already exists
-    const existingCategory = await this.categoryRepository.findByCode(createCategoryDto.code);
+    const code = await this.resolveCode(createCategoryDto);
+
+    const existingCategory = await this.categoryRepository.findByCode(code);
     if (existingCategory) {
       throw new ConflictException('Category with this code already exists');
     }
 
-    // Validate parent if provided
     if (createCategoryDto.parentId) {
       const parent = await this.categoryRepository.findById(createCategoryDto.parentId);
       if (!parent) {
@@ -28,7 +28,7 @@ export class CategoriesService {
     }
 
     const category = await this.categoryRepository.create({
-      code: createCategoryDto.code,
+      code,
       name: createCategoryDto.name,
       description: createCategoryDto.description,
       parent: createCategoryDto.parentId
@@ -36,10 +36,29 @@ export class CategoriesService {
         : undefined,
       image: createCategoryDto.image,
       displayOrder: createCategoryDto.displayOrder ?? 0,
-      isActive: true,
+      isActive: createCategoryDto.isActive ?? true,
     });
 
     return new CategoryResponseDto(category);
+  }
+
+  /** Generate a unique code from name when code is not provided. */
+  private async resolveCode(dto: CreateCategoryDto): Promise<string> {
+    const raw = (dto.code ?? '').trim();
+    if (raw.length >= 2) return raw.substring(0, 50);
+
+    const base = dto.name
+      .trim()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-zA-Z0-9_]/g, '')
+      .toUpperCase()
+      .substring(0, 50) || 'CAT';
+    let code = base;
+    let suffix = 0;
+    while (await this.categoryRepository.findByCode(code)) {
+      code = `${base.substring(0, 47)}_${String(++suffix).padStart(2, '0')}`;
+    }
+    return code;
   }
 
   async findAll(): Promise<CategoryResponseDto[]> {

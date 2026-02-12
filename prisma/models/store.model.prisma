@@ -116,6 +116,7 @@ model Store {
   defaultUsers    User[]      @relation("UserDefaultStore")
   purchaseOrders PurchaseOrder[]
   grns           GRN[]
+  inventoryAdjustments InventoryAdjustment[]
   kots           KOT[]
 
   createdByUser   User?       @relation("StoreCreatedBy", fields: [createdBy], references: [id])

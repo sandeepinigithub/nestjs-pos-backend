@@ -82,6 +82,7 @@ model User {
   // Relations - Inventory
   inventoryUpdated  Inventory[]  @relation("InventoryUpdatedBy")
   inventoryMovements InventoryMovement[] @relation("InventoryMovementCreatedBy")
+  inventoryAdjustmentsCreated InventoryAdjustment[] @relation("InventoryAdjustmentCreatedBy")
   
   // Relations - Loyalty
   loyaltyTransactionsCreated LoyaltyTransaction[] @relation("LoyaltyTransactionCreatedBy")

@@ -247,3 +247,8 @@ enum DeliveryStatus {
   DELAYED
   CANCELLED
 }
+
+enum AdjustmentStatus {
+  DRAFT
+  COMPLETED
+}

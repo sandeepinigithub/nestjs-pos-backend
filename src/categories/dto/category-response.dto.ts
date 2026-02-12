@@ -46,8 +46,13 @@ export class CategoryResponseDto {
     this.image = category.image;
     this.displayOrder = category.displayOrder;
     this.isActive = category.isActive;
-    this.parent = category.parent ? new CategoryResponseDto(category.parent) : undefined;
-    this.children = category.children?.map((c: any) => new CategoryResponseDto(c));
+    // Avoid circular reference: parent/children from Prisma include the full graph and cause stack overflow
+    this.parent = category.parent
+      ? new CategoryResponseDto({ ...category.parent, parent: undefined, children: undefined })
+      : undefined;
+    this.children = category.children?.map((c: any) =>
+      new CategoryResponseDto({ ...c, parent: undefined, children: undefined })
+    );
     this.createdAt = category.createdAt;
     this.updatedAt = category.updatedAt;
   }

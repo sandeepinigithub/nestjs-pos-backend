@@ -55,6 +55,7 @@ model Product {
   productStores   ProductStore[]
   orderItems      OrderItem[]
   inventory       Inventory[]
+  inventoryAdjustmentLines InventoryAdjustmentLine[]
   purchaseOrderItems PurchaseOrderItem[]
   tastings        Tasting[]
   createdByUser   User?    @relation("ProductCreatedBy", fields: [createdBy], references: [id])

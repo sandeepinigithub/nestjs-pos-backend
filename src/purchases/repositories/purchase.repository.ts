@@ -82,8 +82,31 @@ export class PurchaseRepository {
     });
   }
 
+  async deletePurchaseOrder(id: string): Promise<PurchaseOrder> {
+    return this.prisma.purchaseOrder.delete({
+      where: { id },
+    });
+  }
+
   async countPurchaseOrders(where?: Prisma.PurchaseOrderWhereInput): Promise<number> {
     return this.prisma.purchaseOrder.count({ where });
+  }
+
+  async getNextPurchaseOrderNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const prefix = `PO-${year}-`;
+    const last = await this.prisma.purchaseOrder.findFirst({
+      where: { orderNumber: { startsWith: prefix } },
+      orderBy: { orderNumber: 'desc' },
+      select: { orderNumber: true },
+    });
+    let seq = 1;
+    if (last?.orderNumber) {
+      const match = last.orderNumber.slice(prefix.length);
+      const n = parseInt(match, 10);
+      if (!Number.isNaN(n)) seq = n + 1;
+    }
+    return `${prefix}${seq.toString().padStart(4, '0')}`;
   }
 
   // Suppliers
@@ -104,6 +127,42 @@ export class PurchaseRepository {
 
   async createSupplier(data: Prisma.SupplierCreateInput): Promise<Supplier> {
     return this.prisma.supplier.create({ data });
+  }
+
+  async updateSupplier(
+    id: string,
+    data: Prisma.SupplierUpdateInput,
+  ): Promise<Supplier> {
+    return this.prisma.supplier.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deleteSupplier(id: string): Promise<Supplier> {
+    return this.prisma.supplier.delete({
+      where: { id },
+    });
+  }
+
+  async countSuppliers(where?: Prisma.SupplierWhereInput): Promise<number> {
+    return this.prisma.supplier.count({ where });
+  }
+
+  async getNextSupplierCode(): Promise<string> {
+    const prefix = 'SUP';
+    const last = await this.prisma.supplier.findFirst({
+      where: { code: { startsWith: prefix } },
+      orderBy: { code: 'desc' },
+      select: { code: true },
+    });
+    let seq = 1;
+    if (last?.code) {
+      const match = last.code.replace(prefix, '').replace(/^0+/, '') || '0';
+      const n = parseInt(match, 10);
+      if (!Number.isNaN(n)) seq = n + 1;
+    }
+    return `${prefix}${seq.toString().padStart(4, '0')}`;
   }
 
   // Analytics methods

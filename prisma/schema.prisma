@@ -518,6 +518,11 @@ enum DeliveryStatus {
   CANCELLED
 }
 
+enum AdjustmentStatus {
+  DRAFT
+  COMPLETED
+}
+
 // --- inventory.model.prisma ---
 // ============================================
 // Inventory Management Models
@@ -592,6 +597,51 @@ model InventoryMovement {
   @@index([movementType])
   @@index([referenceId])
   @@index([createdAt])
+}
+
+// Inventory Adjustment (document header)
+model InventoryAdjustment {
+  id                String            @id @default(cuid())
+  adjustmentNumber  String            @unique
+  storeId          String
+  adjustmentDate    DateTime
+  reason            String
+  reference         String?
+  status            AdjustmentStatus   @default(DRAFT)
+  totalValue        Decimal?          @db.Decimal(10, 2)
+  notes             String?
+  createdBy         String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  store             Store             @relation(fields: [storeId], references: [id])
+  lines             InventoryAdjustmentLine[]
+  createdByUser     User?              @relation("InventoryAdjustmentCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("inventory_adjustments")
+  @@index([adjustmentNumber])
+  @@index([storeId])
+  @@index([status])
+  @@index([adjustmentDate])
+}
+
+// Inventory Adjustment Line
+model InventoryAdjustmentLine {
+  id                String              @id @default(cuid())
+  adjustmentId      String
+  productId         String
+  quantityDelta     Int                 // positive = IN, negative = OUT
+  unitCost          Decimal?            @db.Decimal(10, 2)
+  notes             String?
+
+  // Relations
+  adjustment        InventoryAdjustment @relation(fields: [adjustmentId], references: [id], onDelete: Cascade)
+  product           Product             @relation(fields: [productId], references: [id])
+
+  @@map("inventory_adjustment_lines")
+  @@index([adjustmentId])
+  @@index([productId])
 }
 
 // --- loyalty.model.prisma ---
@@ -1144,6 +1194,7 @@ model Product {
   productStores   ProductStore[]
   orderItems      OrderItem[]
   inventory       Inventory[]
+  inventoryAdjustmentLines InventoryAdjustmentLine[]
   purchaseOrderItems PurchaseOrderItem[]
   tastings        Tasting[]
   createdByUser   User?    @relation("ProductCreatedBy", fields: [createdBy], references: [id])
@@ -1616,6 +1667,7 @@ model Store {
   defaultUsers    User[]      @relation("UserDefaultStore")
   purchaseOrders PurchaseOrder[]
   grns           GRN[]
+  inventoryAdjustments InventoryAdjustment[]
   kots           KOT[]
 
   createdByUser   User?       @relation("StoreCreatedBy", fields: [createdBy], references: [id])
@@ -1946,6 +1998,7 @@ model User {
   // Relations - Inventory
   inventoryUpdated  Inventory[]  @relation("InventoryUpdatedBy")
   inventoryMovements InventoryMovement[] @relation("InventoryMovementCreatedBy")
+  inventoryAdjustmentsCreated InventoryAdjustment[] @relation("InventoryAdjustmentCreatedBy")
   
   // Relations - Loyalty
   loyaltyTransactionsCreated LoyaltyTransaction[] @relation("LoyaltyTransactionCreatedBy")

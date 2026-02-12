@@ -96,54 +96,6 @@ export class PurchasesController {
     );
   }
 
-  @Get('orders/open')
-  @Roles(
-    UserRole.PURCHASE_MANAGER,
-    UserRole.STORE_ADMIN,
-    UserRole.STORE_MANAGER,
-    UserRole.SUPER_ADMIN,
-    UserRole.TENANT_ADMIN,
-  )
-  @ApiOperation({ summary: 'Get open purchase orders' })
-  @ApiQuery({ name: 'storeId', required: false })
-  @ApiResponse({
-    status: 200,
-    description: 'Open purchase orders retrieved successfully',
-  })
-  async getOpenPurchaseOrders(
-    @Query('storeId') storeId?: string,
-    @CurrentUser() currentUser?: UserResponseDto,
-  ) {
-    const effectiveTenantId =
-      currentUser?.role === UserRole.SUPER_ADMIN ? undefined : currentUser?.tenantId;
-
-    return this.purchaseDashboardService.getOpenPurchaseOrders(storeId, effectiveTenantId);
-  }
-
-  @Get('orders/pending-approval')
-  @Roles(
-    UserRole.PURCHASE_MANAGER,
-    UserRole.STORE_ADMIN,
-    UserRole.STORE_MANAGER,
-    UserRole.SUPER_ADMIN,
-    UserRole.TENANT_ADMIN,
-  )
-  @ApiOperation({ summary: 'Get pending approval purchase orders' })
-  @ApiQuery({ name: 'storeId', required: false })
-  @ApiResponse({
-    status: 200,
-    description: 'Pending approvals retrieved successfully',
-  })
-  async getPendingApprovals(
-    @Query('storeId') storeId?: string,
-    @CurrentUser() currentUser?: UserResponseDto,
-  ) {
-    const effectiveTenantId =
-      currentUser?.role === UserRole.SUPER_ADMIN ? undefined : currentUser?.tenantId;
-
-    return this.purchaseDashboardService.getPendingApprovals(storeId, effectiveTenantId);
-  }
-
   @Get('supplier-analysis')
   @Roles(
     UserRole.PURCHASE_MANAGER,

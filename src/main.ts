@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import * as express from 'express';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -9,8 +10,13 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { AppConfigService } from './config/config.service';
 
+/** Max request body size (e.g. for category/product images as base64). Default is 100kb. */
+const BODY_PARSER_LIMIT = '10mb';
+
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+  app.use(express.json({ limit: BODY_PARSER_LIMIT }));
+  app.use(express.urlencoded({ limit: BODY_PARSER_LIMIT, extended: true }));
 
   // Apply middleware (using Express middleware pattern)
   const requestIdMiddleware = new RequestIdMiddleware();

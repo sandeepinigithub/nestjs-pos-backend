@@ -73,3 +73,48 @@ model InventoryMovement {
   @@index([createdAt])
 }
 
+// Inventory Adjustment (document header)
+model InventoryAdjustment {
+  id                String            @id @default(cuid())
+  adjustmentNumber  String            @unique
+  storeId          String
+  adjustmentDate    DateTime
+  reason            String
+  reference         String?
+  status            AdjustmentStatus   @default(DRAFT)
+  totalValue        Decimal?          @db.Decimal(10, 2)
+  notes             String?
+  createdBy         String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  store             Store             @relation(fields: [storeId], references: [id])
+  lines             InventoryAdjustmentLine[]
+  createdByUser     User?              @relation("InventoryAdjustmentCreatedBy", fields: [createdBy], references: [id])
+
+  @@map("inventory_adjustments")
+  @@index([adjustmentNumber])
+  @@index([storeId])
+  @@index([status])
+  @@index([adjustmentDate])
+}
+
+// Inventory Adjustment Line
+model InventoryAdjustmentLine {
+  id                String              @id @default(cuid())
+  adjustmentId      String
+  productId         String
+  quantityDelta     Int                 // positive = IN, negative = OUT
+  unitCost          Decimal?            @db.Decimal(10, 2)
+  notes             String?
+
+  // Relations
+  adjustment        InventoryAdjustment @relation(fields: [adjustmentId], references: [id], onDelete: Cascade)
+  product           Product             @relation(fields: [productId], references: [id])
+
+  @@map("inventory_adjustment_lines")
+  @@index([adjustmentId])
+  @@index([productId])
+}
+

@@ -1,12 +1,13 @@
-import { IsString, IsOptional, IsInt, Min, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsInt, IsBoolean, Min, MinLength, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCategoryDto {
-  @ApiProperty({ description: 'Category code', example: 'BEV' })
+  @ApiPropertyOptional({ description: 'Category code (auto-generated from name if omitted)', example: 'BEV' })
+  @IsOptional()
   @IsString()
   @MinLength(2, { message: 'Category code must be at least 2 characters' })
   @MaxLength(50, { message: 'Category code cannot exceed 50 characters' })
-  code: string;
+  code?: string;
 
   @ApiProperty({ description: 'Category name', example: 'Beverages' })
   @IsString()
@@ -35,5 +36,10 @@ export class CreateCategoryDto {
   @IsInt()
   @Min(0)
   displayOrder?: number;
+
+  @ApiPropertyOptional({ description: 'Whether the category is active', default: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
 
