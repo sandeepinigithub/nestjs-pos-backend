@@ -55,6 +55,7 @@ model Tenant {
   users             User[]            @relation("UserTenant")
   subscriptions     Subscription[]
   bogoOffers        BOGOOffer[]
+  promotions        Promotion[]
   createdByUser     User?             @relation("TenantCreatedBy", fields: [createdBy], references: [id])
   updatedByUser     User?             @relation("TenantUpdatedBy", fields: [updatedBy], references: [id])
 

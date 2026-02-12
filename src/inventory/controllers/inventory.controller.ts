@@ -152,6 +152,8 @@ export class InventoryController {
     UserRole.STORE_MANAGER,
     UserRole.SUPER_ADMIN,
     UserRole.TENANT_ADMIN,
+    UserRole.CASHIER,
+    UserRole.USER,
   )
   @ApiOperation({ summary: 'Get stock on hand (SKU, product, variant)' })
   @ApiQuery({ name: 'storeId', required: false })

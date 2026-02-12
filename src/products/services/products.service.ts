@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { ProductRepository } from '../repositories/product.repository';
 import { CreateProductDto } from '../dto/create-product.dto';
+import { UpdateProductDto } from '../dto/update-product.dto';
 import { ProductResponseDto } from '../dto/product-response.dto';
 import { UserResponseDto } from '../../users/dto/user-response.dto';
 import { PaginationDto, PaginationResponseDto } from '../../common/dto/pagination.dto';
@@ -81,6 +82,34 @@ export class ProductsService {
     }
 
     return new ProductResponseDto(product);
+  }
+
+  async update(
+    id: string,
+    updateProductDto: UpdateProductDto,
+    currentUser?: UserResponseDto,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productRepository.findById(id);
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    const updated = await this.productRepository.update(id, {
+      ...(updateProductDto.code !== undefined && { code: updateProductDto.code }),
+      ...(updateProductDto.name !== undefined && { name: updateProductDto.name }),
+      ...(updateProductDto.description !== undefined && { description: updateProductDto.description }),
+      ...(updateProductDto.categoryId !== undefined && { category: { connect: { id: updateProductDto.categoryId } } }),
+      ...(updateProductDto.image !== undefined && { image: updateProductDto.image }),
+      ...(updateProductDto.status !== undefined && { status: updateProductDto.status }),
+      ...(updateProductDto.basePrice !== undefined && { basePrice: updateProductDto.basePrice }),
+      ...(updateProductDto.costPrice !== undefined && { costPrice: updateProductDto.costPrice }),
+      ...(updateProductDto.attributes !== undefined && { attributes: updateProductDto.attributes }),
+      ...(updateProductDto.tags !== undefined && { tags: updateProductDto.tags }),
+      ...(updateProductDto.isAvailable !== undefined && { isAvailable: updateProductDto.isAvailable }),
+      ...(currentUser?.id ? { updatedBy: currentUser.id } : {}),
+    });
+
+    return new ProductResponseDto(updated);
   }
 
   async findByCategory(categoryId: string): Promise<ProductResponseDto[]> {

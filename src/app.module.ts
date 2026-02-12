@@ -21,6 +21,7 @@ import { TenantsModule } from './tenants/tenants.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { SalesModule } from './sales/sales.module';
 import { BOGOModule } from './bogo/bogo.module';
+import { PromotionsModule } from './promotions/promotions.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { BOGOModule } from './bogo/bogo.module';
     AuditModule,
     SyncModule,
     HealthModule,
+    PromotionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

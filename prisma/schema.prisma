@@ -1210,6 +1210,71 @@ model Tax {
   @@index([isActive])
 }
 
+// --- promotion.model.prisma ---
+// ============================================
+// Promotions Configuration Models
+// ============================================
+
+enum PromotionType {
+  BASIC
+  ADVANCED
+}
+
+enum PromotionStatus {
+  ACTIVE
+  INACTIVE
+  DRAFT
+}
+
+model Promotion {
+  id               String           @id @default(cuid())
+  tenantId         String?
+
+  name             String
+  description      String?
+
+  type             PromotionType
+  status           PromotionStatus  @default(ACTIVE)
+
+  // Schedule and timing
+  schedule         Json
+  startDate        DateTime?
+  endDate          DateTime?
+  scheduleType     String?          // "one-time" | "recurring"
+  noEndDate        Boolean          @default(false)
+
+  // Scope & targeting
+  outletIds        String[]         // References Store.id
+  orderChannels    OrderChannel[]   // Reuse existing BOGO OrderChannel enum
+  applicationMethod String          @default("auto")      // "auto" | "manual"
+  targetAudience   String           @default("everyone")  // "everyone" | "exclusive"
+  customerGroups   String[]         // E.g. ["vip", "new_customers"]
+  promoCode        String?
+
+  // Behaviour flags
+  showPromptOnSell Boolean          @default(true)
+  offerLoyalty     Boolean          @default(false)
+
+  // Detailed configuration blobs (mirror UI payload structure)
+  discount         Json?
+  triggerCondition Json?
+  rewardAction     Json?
+
+  // Audit
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Relations
+  tenant           Tenant?          @relation(fields: [tenantId], references: [id])
+
+  @@map("promotions")
+  @@index([tenantId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([promoCode])
+}
+
 // --- purchase.model.prisma ---
 // ============================================
 // Purchase Management Models
@@ -1758,6 +1823,7 @@ model Tenant {
   users             User[]            @relation("UserTenant")
   subscriptions     Subscription[]
   bogoOffers        BOGOOffer[]
+  promotions        Promotion[]
   createdByUser     User?             @relation("TenantCreatedBy", fields: [createdBy], references: [id])
   updatedByUser     User?             @relation("TenantUpdatedBy", fields: [updatedBy], references: [id])
 

@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Patch } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from '../services/products.service';
 import { CreateProductDto } from '../dto/create-product.dto';
+import { UpdateProductDto } from '../dto/update-product.dto';
 import { ProductResponseDto } from '../dto/product-response.dto';
 import { PaginationDto, PaginationResponseDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
@@ -61,6 +62,19 @@ export class ProductsController {
   @ApiResponse({ status: 404, description: 'Product not found' })
   async findOne(@Param('id') id: string): Promise<ProductResponseDto> {
     return this.productsService.findOne(id);
+  }
+
+  @Patch(':id')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN, UserRole.STORE_ADMIN, UserRole.STORE_MANAGER)
+  @ApiOperation({ summary: 'Update a product' })
+  @ApiResponse({ status: 200, description: 'Product updated successfully', type: ProductResponseDto })
+  @ApiResponse({ status: 404, description: 'Product not found' })
+  async update(
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateProductDto,
+    @CurrentUser() currentUser: UserResponseDto,
+  ): Promise<ProductResponseDto> {
+    return this.productsService.update(id, updateProductDto, currentUser);
   }
 }
 
